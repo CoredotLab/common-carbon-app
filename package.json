@@ -15,6 +15,7 @@
     "next-intl": "^3.2.1",
     "next-translate": "^2.6.2",
     "react": "^18",
+    "react-device-detect": "^2.2.3",
     "react-dom": "^18",
     "react-i18next": "^13.5.0"
   },
