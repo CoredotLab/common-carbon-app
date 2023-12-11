@@ -33,9 +33,9 @@ export default function RootLayout({
   return (
     <html lang={locale}>
       <body className={pretendard.variable}>
-        <div className="min-h-screen flex flex-col items-center">
+        <div className="min-h-screen flex flex-col items-center font-pretendard">
           <Header />
-          <main className="flex-1 mt-[70px] max-w-[1440px] min-w-[360px]">
+          <main className="flex-1 mt-[70px] max-w-[1440px] min-w-[360px] w-full">
             {children}
           </main>
           <Footer />
