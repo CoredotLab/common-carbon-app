@@ -41,7 +41,7 @@ export default function CimMap() {
   };
 
   return (
-    <main className="w-full min-h-[226px] border">
+    <main className="w-full min-h-[300px] border">
       {/* 위 컴포넌트에 꽉차게 UI */}
       <Map
         initialViewState={{
@@ -49,7 +49,7 @@ export default function CimMap() {
           longitude: 127.0,
           zoom: 2,
         }}
-        style={{ width: "100%", height: "100%", minHeight: "226px" }}
+        style={{ width: "100%", height: "100%", minHeight: "300px" }}
         mapStyle="mapbox://styles/mapbox/dark-v9"
         interactiveLayerIds={[clusterLayer.id as string]}
         mapboxAccessToken={MAPBOX_TOKEN}
