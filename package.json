@@ -9,7 +9,10 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@types/mapbox-gl": "^2.7.19",
+    "dotenv": "^16.3.1",
     "i18next": "^23.7.7",
+    "mapbox-gl": "^3.0.1",
     "next": "14.0.3",
     "next-i18next": "^15.0.0",
     "next-intl": "^3.2.1",
@@ -18,6 +21,7 @@
     "react-device-detect": "^2.2.3",
     "react-dom": "^18",
     "react-i18next": "^13.5.0",
+    "react-map-gl": "^7.1.6",
     "recoil": "^0.7.7"
   },
   "devDependencies": {
