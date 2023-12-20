@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import localFont from "next/font/local";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
+import SideMenu from "@/components/sidemenu";
 
 const pretendard = localFont({
   src: "../../PretendardVariable.ttf",
@@ -39,6 +40,7 @@ export default function RootLayout({
             {children}
           </main>
           <Footer />
+          <SideMenu />
         </div>
       </body>
     </html>
