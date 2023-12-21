@@ -1,7 +1,15 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
+import axios from "axios";
+import { useRecoilValue, useSetRecoilState } from "recoil";
+import {
+  acState,
+  hcState,
+  mtState,
+  openFilterState,
+} from "@/recoil/filterState";
 
 export default function Filter() {
   return (
@@ -13,20 +21,49 @@ export default function Filter() {
   );
 }
 
-function AcquiringCountry() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [selectedCountry, setSelectedCountry] = useState("All");
+interface AC {
+  id: number;
+  name: string;
+}
 
-  const countries = ["All", "Korea"];
+function AcquiringCountry() {
+  const [countries, setCountries] = useState<AC[]>([]);
+  const acValue = useRecoilValue(acState);
+  const setAcValue = useSetRecoilState(acState);
+  const openFilterValue = useRecoilValue(openFilterState);
+  const setOpenFilterValue = useSetRecoilState(openFilterState);
 
   const toggleDropdown = () => {
-    setIsOpen(!isOpen);
+    if (openFilterValue[0]) {
+      setOpenFilterValue([false, false, false]);
+    } else {
+      setOpenFilterValue([true, false, false]);
+    }
   };
 
-  const handleSelectCountry = (country: React.SetStateAction<string>) => {
-    setSelectedCountry(country);
-    setIsOpen(false);
+  const handleSelectCountry = (country: string) => {
+    setAcValue(country);
+    setOpenFilterValue([false, false, false]);
   };
+
+  const requestAC = async () => {
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/ac`;
+    try {
+      const response = await axios.get(url);
+      if (response.status === 200) {
+        const countries = response.data;
+        // add "All" to the beginning of the array
+        countries.unshift({ id: 0, name: "All" });
+        setCountries(countries);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    requestAC();
+  }, []);
 
   return (
     <main className="flex flex-col space-y-[7px]">
@@ -36,7 +73,7 @@ function AcquiringCountry() {
           onClick={toggleDropdown}
           className="border border-[1px] border-[#B4B1B1] bg-[#F5F5F5] flex w-[213px] h-[30px] py-[10px] px-[20px] items-center justify-between rounded-[8px]"
         >
-          {selectedCountry}
+          {acValue}
           <Image
             src="/icon_dropdown.svg"
             alt="arrow-down"
@@ -44,15 +81,15 @@ function AcquiringCountry() {
             height={18}
           />
         </button>
-        {isOpen && (
+        {openFilterValue[0] && (
           <div className="absolute border border-[1px] border-[#B4B1B1] bg-[#F5F5F5] flex flex-col w-[213px] mt-1 rounded-[8px] z-40">
             {countries.map((country, index) => (
               <div
                 key={index}
                 className="p-1 hover:bg-gray-200 cursor-pointer px-[20px] z-40"
-                onClick={() => handleSelectCountry(country)}
+                onClick={() => handleSelectCountry(country.name)}
               >
-                {country}
+                {country.name}
               </div>
             ))}
           </div>
@@ -62,20 +99,49 @@ function AcquiringCountry() {
   );
 }
 
-function HostCountry() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [selectedCountry, setSelectedCountry] = useState("All");
+interface HC {
+  id: number;
+  name: string;
+}
 
-  const countries = ["All", "Korea"];
+function HostCountry() {
+  const [countries, setCountries] = useState<HC[]>([]);
+  const hcValue = useRecoilValue(hcState);
+  const setHcValue = useSetRecoilState(hcState);
+  const openFilterValue = useRecoilValue(openFilterState);
+  const setOpenFilterValue = useSetRecoilState(openFilterState);
 
   const toggleDropdown = () => {
-    setIsOpen(!isOpen);
+    if (openFilterValue[1]) {
+      setOpenFilterValue([false, false, false]);
+    } else {
+      setOpenFilterValue([false, true, false]);
+    }
   };
 
-  const handleSelectCountry = (country: React.SetStateAction<string>) => {
-    setSelectedCountry(country);
-    setIsOpen(false);
+  const handleSelectCountry = (country: string) => {
+    setHcValue(country);
+    setOpenFilterValue([false, false, false]);
   };
+
+  const requestHC = async () => {
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/hc`;
+    try {
+      const response = await axios.get(url);
+      if (response.status === 200) {
+        const countries = response.data;
+        // add "All" to the beginning of the array
+        countries.unshift({ id: 0, name: "All" });
+        setCountries(countries);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    requestHC();
+  }, []);
 
   return (
     <main className="flex flex-col space-y-[7px]">
@@ -85,7 +151,7 @@ function HostCountry() {
           onClick={toggleDropdown}
           className="border border-[1px] border-[#B4B1B1] bg-[#F5F5F5] flex w-[213px] h-[30px] py-[10px] px-[20px] items-center justify-between rounded-[8px] z-30"
         >
-          {selectedCountry}
+          {hcValue}
           <Image
             src="/icon_dropdown.svg"
             alt="arrow-down"
@@ -93,15 +159,15 @@ function HostCountry() {
             height={18}
           />
         </button>
-        {isOpen && (
+        {openFilterValue[1] && (
           <div className="absolute border border-[1px] border-[#B4B1B1] bg-[#F5F5F5] flex flex-col w-[213px] mt-1 rounded-[8px] z-30">
             {countries.map((country, index) => (
               <div
                 key={index}
                 className="p-1 hover:bg-gray-200 cursor-pointer px-[20px] z-40"
-                onClick={() => handleSelectCountry(country)}
+                onClick={() => handleSelectCountry(country.name)}
               >
-                {country}
+                {country.name}
               </div>
             ))}
           </div>
@@ -111,20 +177,49 @@ function HostCountry() {
   );
 }
 
-function MitigationTechnology() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [selectedCountry, setSelectedCountry] = useState("All");
+interface MT {
+  id: number;
+  name: string;
+}
 
-  const countries = ["All", "Korea"];
+function MitigationTechnology() {
+  const [countries, setCountries] = useState<MT[]>([]);
+  const openFilterValue = useRecoilValue(openFilterState);
+  const setOpenFilterValue = useSetRecoilState(openFilterState);
+  const mtValue = useRecoilValue(mtState);
+  const setMtValue = useSetRecoilState(mtState);
 
   const toggleDropdown = () => {
-    setIsOpen(!isOpen);
+    if (openFilterValue[2]) {
+      setOpenFilterValue([false, false, false]);
+    } else {
+      setOpenFilterValue([false, false, true]);
+    }
   };
 
-  const handleSelectCountry = (country: React.SetStateAction<string>) => {
-    setSelectedCountry(country);
-    setIsOpen(false);
+  const handleSelectCountry = (country: string) => {
+    setMtValue(country);
+    setOpenFilterValue([false, false, false]);
   };
+
+  const requestMT = async () => {
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/mt`;
+    try {
+      const response = await axios.get(url);
+      if (response.status === 200) {
+        const countries = response.data;
+        // add "All" to the beginning of the array
+        countries.unshift({ id: 0, name: "All" });
+        setCountries(countries);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    requestMT();
+  }, []);
 
   return (
     <main className="flex flex-col space-y-[7px]">
@@ -134,7 +229,7 @@ function MitigationTechnology() {
           onClick={toggleDropdown}
           className="border border-[1px] border-[#B4B1B1] bg-[#F5F5F5] flex w-[213px] h-[30px] py-[10px] px-[20px] items-center justify-between rounded-[8px] z-20"
         >
-          {selectedCountry}
+          {mtValue}
           <Image
             src="/icon_dropdown.svg"
             alt="arrow-down"
@@ -142,15 +237,15 @@ function MitigationTechnology() {
             height={18}
           />
         </button>
-        {isOpen && (
+        {openFilterValue[2] && (
           <div className="absolute border border-[1px] border-[#B4B1B1] bg-[#F5F5F5] flex flex-col w-[213px] mt-1 rounded-[8px] z-20">
             {countries.map((country, index) => (
               <div
                 key={index}
                 className="p-1 hover:bg-gray-200 cursor-pointer px-[20px]"
-                onClick={() => handleSelectCountry(country)}
+                onClick={() => handleSelectCountry(country.name)}
               >
-                {country}
+                {country.name}
               </div>
             ))}
           </div>

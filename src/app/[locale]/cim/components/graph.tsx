@@ -126,7 +126,7 @@ export default function CimGraph() {
         <div className="w-[105px] flex flex-col h-full space-y-[5px] justify-center shrink-0">
           <div className="flex space-x-[6px] px-[6px] items-center">
             <Image
-              src="/cim/circle_yellow.svg"
+              src="/cim/circle_yellow.png"
               width={8}
               height={8}
               alt="graph"
@@ -135,7 +135,7 @@ export default function CimGraph() {
           </div>
           <div className="flex space-x-[6px] px-[6px] items-center">
             <Image
-              src="/cim/circle_green.svg"
+              src="/cim/circle_green.png"
               width={8}
               height={8}
               alt="graph"
@@ -144,7 +144,7 @@ export default function CimGraph() {
           </div>
           <div className="flex space-x-[6px] px-[6px] items-center">
             <Image
-              src="/cim/circle_purple.svg"
+              src="/cim/circle_purple.png"
               width={8}
               height={8}
               alt="graph"

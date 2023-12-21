@@ -84,7 +84,7 @@ export default function CimTable() {
           More detail information
         </span>
         <div className="flex w-[24px] h-[24px] py-[6px] px-[2px] justify-center items-center">
-          <Image src="/cim/arrow_down.svg" width={10} height={20} alt="more" />
+          <Image src="/cim/arrow_down.png" width={10} height={20} alt="more" />
         </div>
       </button>
     </main>

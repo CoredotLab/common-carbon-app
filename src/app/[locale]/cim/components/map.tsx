@@ -13,6 +13,7 @@ import {
 } from "./map/layers";
 import { useRef } from "react";
 import "mapbox-gl/dist/mapbox-gl.css";
+import Image from "next/image";
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN; // Set your mapbox token here
 
@@ -41,7 +42,7 @@ export default function CimMap() {
   };
 
   return (
-    <main className="w-full min-h-[300px] border">
+    <main className="w-full min-h-[300px] border relative">
       {/* 위 컴포넌트에 꽉차게 UI */}
       <Map
         initialViewState={{
@@ -70,6 +71,14 @@ export default function CimMap() {
           <Layer {...unclusteredPointLayer} />
         </Source>
       </Map>
+      <div className="absolute top-[21px] left-[10px]">
+        <Image
+          src="/cim/map_carbon_reduction_index.png"
+          width={188}
+          height={18}
+          alt={"index"}
+        />
+      </div>
     </main>
   );
 }
