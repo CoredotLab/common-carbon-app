@@ -2,9 +2,10 @@
 import { acState, hcState, mtState } from "@/recoil/filterState";
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { useRecoilValue } from "recoil";
+import { useRecoilValue, useSetRecoilState } from "recoil";
 import axios from "axios";
 import { useWindowResize } from "@/hooks/useWindowResize";
+import { detailInfoState } from "@/recoil/detailInfoState";
 
 interface RowResponse {
   row: string;
@@ -17,7 +18,6 @@ interface TableResponse {
 }
 
 export default function CimTable() {
-  const [isOpenedMoreInfo, setIsOpenedMoreInfo] = useState(false);
   const [tableData, setTableData] = useState<RowResponse[]>([]);
   const [tableSubject, setTableSubject] = useState("Country");
   const [totalReduction, setTotalReduction] = useState(0);
@@ -25,9 +25,11 @@ export default function CimTable() {
   const hcValue = useRecoilValue(hcState);
   const mtValue = useRecoilValue(mtState);
   const innerWidth = useWindowResize();
+  const detailInfoValue = useRecoilValue(detailInfoState);
+  const setDetailInfoState = useSetRecoilState(detailInfoState);
 
   const handleClickedMoreInfo = () => {
-    setIsOpenedMoreInfo(!isOpenedMoreInfo);
+    setDetailInfoState(!detailInfoValue);
   };
 
   useEffect(() => {
@@ -176,7 +178,7 @@ export default function CimTable() {
       {/* more info */}
       <button
         onClick={handleClickedMoreInfo}
-        className="md:flex hidden w-full justify-end space-x-[10px] items-center"
+        className="md:flex hidden w-full justify-end space-x-[10px] items-center h-[36px]"
       >
         <span className="text-primary text-[12px] font-[400]">
           More detail information

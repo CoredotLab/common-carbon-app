@@ -5,6 +5,7 @@ import Filter from "./components/filter";
 import CimMap from "./components/map";
 import CimGraph from "./components/graph";
 import CimTable from "./components/table";
+import CimDetailInfo from "./components/detailInfo";
 
 export default function Home() {
   const t = useTranslations("Index");
@@ -20,6 +21,7 @@ export default function Home() {
           <CimTable />
         </div>
       </div>
+      <CimDetailInfo />
     </main>
   );
 }
