@@ -6,40 +6,68 @@ import Map, {
   Marker,
   Source,
 } from "react-map-gl";
-import {
-  clusterLayer,
-  clusterCountLayer,
-  unclusteredPointLayer,
-} from "./map/layers";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import "mapbox-gl/dist/mapbox-gl.css";
 import Image from "next/image";
+import { useRecoilValue } from "recoil";
+import { acState, hcState, mtState } from "@/recoil/filterState";
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN; // Set your mapbox token here
 
+interface mapData {
+  ac: string;
+  hc: string;
+  title: string;
+  company: string;
+  methodology: string;
+  m_end: string;
+  lat: number;
+  id: number;
+  mt: string;
+  reduction: number;
+  m_start: string;
+  l_name: string;
+  long: number;
+}
+
 export default function CimMap() {
   const mapRef = useRef<MapRef>(null);
+  const acValue = useRecoilValue(acState);
+  const hcValue = useRecoilValue(hcState);
+  const mtValue = useRecoilValue(mtState);
+  const [mapUrl, setMapUrl] = useState(
+    `${process.env.NEXT_PUBLIC_API_URL}/geomap`
+  );
 
   const onClick = (event: any) => {
     const feature = event.features[0];
-    const clusterId = feature.properties.cluster_id;
 
-    const mapboxSource = mapRef.current?.getSource(
-      "earthquakes"
-    ) as GeoJSONSource;
+    if (!feature) {
+      return;
+    }
 
-    mapboxSource.getClusterExpansionZoom(clusterId, (err, zoom) => {
-      if (err) {
-        return;
-      }
+    // 클릭된 feature의 좌표를 가져옵니다.
+    const coordinates = feature.geometry.coordinates;
 
-      mapRef.current?.easeTo({
-        center: feature.geometry.coordinates,
-        zoom,
-        duration: 500,
-      });
+    // 지도의 중심을 클릭된 좌표로 이동하고, 확대합니다.
+    mapRef.current?.easeTo({
+      center: coordinates,
+      zoom: 6, // 확대 수준 (zoom level)은 적절히 조절할 수 있습니다.
+      duration: 500,
     });
   };
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams();
+    if (acValue !== "All") urlParams.append("ac", acValue);
+    if (hcValue !== "All") urlParams.append("hc", hcValue);
+    if (mtValue !== "All") urlParams.append("mt", mtValue);
+
+    const url = `${
+      process.env.NEXT_PUBLIC_API_URL
+    }/geomap?${urlParams.toString()}`;
+    setMapUrl(url);
+  }, [acValue, hcValue, mtValue]);
 
   return (
     <main className="w-full min-h-[300px] border relative">
@@ -51,24 +79,64 @@ export default function CimMap() {
           zoom: 2,
         }}
         style={{ width: "100%", height: "100%", minHeight: "300px" }}
-        mapStyle="mapbox://styles/mapbox/dark-v9"
-        interactiveLayerIds={[clusterLayer.id as string]}
+        mapStyle="mapbox://styles/mapbox/dark-v10"
+        interactiveLayerIds={["dataCircleLayer"]}
         mapboxAccessToken={MAPBOX_TOKEN}
         onClick={onClick}
         ref={mapRef}
       >
-        <Marker longitude={127.0} latitude={37.6} color="red" />
-        <Source
-          id="earthquakes"
-          type="geojson"
-          data="https://docs.mapbox.com/mapbox-gl-js/assets/earthquakes.geojson"
-          cluster={true}
-          clusterMaxZoom={14}
-          clusterRadius={50}
-        >
-          <Layer {...clusterLayer} />
-          <Layer {...clusterCountLayer} />
-          <Layer {...unclusteredPointLayer} />
+        <Source id="myData" type="geojson" data={mapUrl}>
+          <Layer
+            id="dataCircleLayer"
+            type="circle"
+            paint={{
+              // Use a 'step' expression to implement a graduated circle size based on the 'reduction' property
+              "circle-radius": [
+                "interpolate",
+                ["linear"],
+                ["get", "reduction"],
+                0,
+                5, // 0 reduction - radius 5
+                500,
+                8, // 500 reduction - radius 10
+                1000,
+                11, // 1000 reduction - radius 15
+                3000,
+                14, // 3000 reduction - radius 20
+                5000,
+                17, // 5000 reduction - radius 25
+                30000,
+                20, // 30000 reduction - radius 30
+                100000,
+                23, // 100000 reduction - radius 35
+                500000,
+                26, // 500000 reduction - radius 40
+              ],
+              "circle-color": "#50BBD6", // set color of circles
+            }}
+          />
+          {/* Symbol Layer for rendering text */}
+          <Layer
+            id="dataTextLayer"
+            type="symbol"
+            layout={{
+              "text-field": [
+                "case",
+                [">=", ["get", "reduction"], 1000],
+                [
+                  "concat",
+                  ["to-string", ["round", ["/", ["get", "reduction"], 1000]]],
+                  "K",
+                ],
+                ["get", "reduction"],
+              ],
+              "text-size": 12,
+              "text-allow-overlap": true,
+            }}
+            paint={{
+              "text-color": "#fff",
+            }}
+          />
         </Source>
       </Map>
       <div className="absolute top-[21px] left-[10px]">
