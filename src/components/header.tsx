@@ -28,18 +28,19 @@ export default function Header() {
 
   return (
     <header className="top-0 fixed w-full min-w-[360px] flex justify-between items-center bg-white border-b-[1px] border-app_gray z-50">
-      <div className="h-[70px] p-[10px] flex">
+      <div className="w-[221px] h-[22px] p-[10px] flex flex-col justify-center">
         <Link href="/">
           <Image
-            src="/logo_umirae.svg"
-            alt="logo_umirae"
-            width={155}
-            height={60}
+            src="/logo_cc.png"
+            alt="logo_cc"
+            width={728}
+            height={74}
+            quality={100}
           />
         </Link>
       </div>
 
-      <nav className="md:flex hidden pr-[20px] space-x-[40px] flex items-center text-[20px] font-[600]">
+      <nav className="md:flex hidden pr-[20px] space-x-[40px] flex items-center text-[20px] font-[600] h-[70px]">
         <Link
           href="/"
           className={`w-[76px] flex justify-center ${isActive("")}`}
@@ -53,7 +54,7 @@ export default function Header() {
           CIM
         </Link>
         <Link
-          href="/cal"
+          href="/cim"
           className={`w-[76px] flex justify-center ${isActive("cal")}`}
           onClick={() => {
             alert("Service will be available soon!");
@@ -63,7 +64,7 @@ export default function Header() {
           CAL
         </Link>
         <Link
-          href="/pdd"
+          href="/cim"
           className={`w-[76px] flex justify-center ${isActive("pdd")}`}
           onClick={() => {
             alert("Service will be available soon!");
@@ -73,7 +74,7 @@ export default function Header() {
           PDD
         </Link>
         <Link
-          href="/profile"
+          href="/cim"
           className={`w-[76px] flex justify-center ${isActive("profile")}`}
           onClick={() => {
             alert("Service will be available soon!");
