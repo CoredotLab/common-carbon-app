@@ -111,6 +111,8 @@ export default function CimMap() {
                 23, // 100000 reduction - radius 35
                 500000,
                 26, // 500000 reduction - radius 40
+                1000000,
+                29, // 1000000 reduction - radius 45
               ],
               "circle-color": "#50BBD6", // set color of circles
             }}
