@@ -24,6 +24,7 @@ export default function CimTable() {
   const acValue = useRecoilValue(acState);
   const hcValue = useRecoilValue(hcState);
   const mtValue = useRecoilValue(mtState);
+  const innerWidth = useWindowResize();
 
   const handleClickedMoreInfo = () => {
     setIsOpenedMoreInfo(!isOpenedMoreInfo);
@@ -92,6 +93,34 @@ export default function CimTable() {
     return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
 
+  const balanceTableLength = (isMobile: boolean) => {
+    if (tableData.length === 0) return;
+    if (isMobile) {
+      const tempTableData = tableData;
+      let lastReduction = tempTableData[tempTableData.length - 1].reduction;
+      while (lastReduction === -1) {
+        tempTableData.pop();
+        lastReduction = tempTableData[tempTableData.length - 1].reduction;
+      }
+      setTableData(tempTableData);
+    } else {
+      if (tableData.length > 15) {
+        setTableData(tableData.slice(0, 15));
+      } else {
+        const emptyArray = Array(15 - tableData.length).fill({
+          row: "",
+          reduction: -1,
+        });
+        setTableData(tableData.concat(emptyArray));
+      }
+    }
+  };
+
+  useEffect(() => {
+    balanceTableLength(innerWidth < 768);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [innerWidth]);
+
   return (
     <main className="flex flex-col w-full md:min-h-[519px] shrink-0">
       {/* subjects */}
@@ -119,7 +148,7 @@ export default function CimTable() {
             <tr
               key={index}
               className={
-                "h-[30px]" + " " + `${index % 2 === 1 ? "bg-[#E6F8F5]" : ""}`
+                "h-[24px]" + " " + `${index % 2 === 1 ? "bg-[#E6F8F5]" : ""}`
               }
             >
               {data.row === "" ? (
@@ -129,7 +158,7 @@ export default function CimTable() {
               )}
               <td className="pl-[10px]">{data.row}</td>
               <td className="pl-[10px]">
-                {data.reduction === -1 ? "" : data.reduction}
+                {data.reduction === -1 ? "" : formatNumber(data.reduction)}
               </td>
             </tr>
           ))}
