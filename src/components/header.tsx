@@ -28,7 +28,7 @@ export default function Header() {
 
   return (
     <header className="top-0 fixed w-full min-w-[360px] flex justify-between items-center bg-white border-b-[1px] border-app_gray z-50">
-      <div className="w-[221px] h-[22px] p-[10px] flex flex-col justify-center">
+      <div className="w-[221px] h-[70px] p-[10px] flex flex-col justify-center">
         <Link href="/">
           <Image
             src="/logo_cc.png"

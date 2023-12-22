@@ -92,7 +92,7 @@ export default function CimDetailInfo() {
           setTotalReduction(totalReduction);
         }
       } catch (error) {
-        console.log(error);
+        
       }
     };
     requestTableData();
