@@ -48,32 +48,31 @@ export default function CimTable() {
         if (response.status === 200) {
           const data = response.data as TableResponse;
           setTableSubject(data.subject);
-          console.log(data.data, typeof data.data);
+
           // object to array
           const keyArray = Object.keys(data.data);
           const valueArray = Object.values(data.data) as number[];
-          console.log(keyArray, valueArray);
+
           const tableData = keyArray.map((key, index) => {
             return { row: key, reduction: valueArray[index] } as RowResponse;
           });
-          console.log(tableData);
+
           const sortedTableData = tableData.sort((a, b) => {
             return Number(b.reduction) - Number(a.reduction);
           });
-          console.log(sortedTableData);
+
           // innerWidth가 768px 이상이면 최대 15개. 15개 안될경우 빈칸으로 채움
           // innerWidth가 768px 미만이면 최대 15개. 빈칸 안채움.
           const innerWidthOrg = window.innerWidth;
           if (sortedTableData.length > 15) {
             setTableData(sortedTableData.slice(0, 15));
           } else {
-            console.log(innerWidthOrg);
             if (innerWidthOrg >= 768) {
               const emptyArray = Array(15 - sortedTableData.length).fill({
                 row: "",
                 reduction: -1,
               });
-              console.log(emptyArray);
+
               setTableData(sortedTableData.concat(emptyArray));
             } else {
               setTableData(sortedTableData);
@@ -84,9 +83,7 @@ export default function CimTable() {
           const totalReduction = valueArray.reduce((a, b) => a + b, 0);
           setTotalReduction(totalReduction);
         }
-      } catch (error) {
-        console.log(error);
-      }
+      } catch (error) {}
     };
     requestTableData();
   }, [acValue, hcValue, mtValue]);

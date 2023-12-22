@@ -56,9 +56,7 @@ function AcquiringCountry() {
         countries.unshift({ id: 0, name: "All" });
         setCountries(countries);
       }
-    } catch (error) {
-      console.log(error);
-    }
+    } catch (error) {}
   };
 
   useEffect(() => {
@@ -134,9 +132,7 @@ function HostCountry() {
         countries.unshift({ id: 0, name: "All" });
         setCountries(countries);
       }
-    } catch (error) {
-      console.log(error);
-    }
+    } catch (error) {}
   };
 
   useEffect(() => {
@@ -212,9 +208,7 @@ function MitigationTechnology() {
         countries.unshift({ id: 0, name: "All" });
         setCountries(countries);
       }
-    } catch (error) {
-      console.log(error);
-    }
+    } catch (error) {}
   };
 
   useEffect(() => {

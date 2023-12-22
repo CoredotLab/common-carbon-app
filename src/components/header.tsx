@@ -13,7 +13,7 @@ export default function Header() {
 
   const isActive = (_path: string) => {
     const pathSplit = path.split("/");
-    console.debug(pathSplit);
+
     if (pathSplit.length === 2 && _path === "") {
       return "text-primary";
     }

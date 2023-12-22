@@ -58,19 +58,15 @@ export default function CimGraph() {
       process.env.NEXT_PUBLIC_API_URL
     }/graph?${urlParams.toString()}`;
 
-    console.log(url);
     try {
       const response = await axios.get(url);
       if (response.status === 200) {
         const data = response.data as GraphResponse;
-        console.log(data.graphData);
-        console.log(data.usedTechnologies);
+
         setGraphData(data.graphData);
         setUsedTechnology(data.usedTechnologies);
       }
-    } catch (error) {
-      console.log(error);
-    }
+    } catch (error) {}
   };
 
   useEffect(() => {
