@@ -10,6 +10,7 @@ export default function Footer() {
       className="hidden md:flex w-full justify-between items-center py-[23px] px-[20px] border-t-[1px] border-app_gray"
       style={{
         backgroundColor: isHome ? "#001D03" : "#fff",
+        borderColor: isHome ? "#CECECE" : "#fff",
       }}
     >
       <span
