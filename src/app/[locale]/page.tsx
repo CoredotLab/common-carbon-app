@@ -4,6 +4,7 @@ import SectionMain from "@/components/home/section.main";
 import SectionImpacts from "@/components/home/section.impacts";
 import SectionValues from "@/components/home/section.values";
 import SectionProjects from "@/components/home/section.projects";
+import SectionItmo from "@/components/home/section.itmo";
 
 export default function Home() {
   const t = useTranslations("Index");
@@ -13,6 +14,7 @@ export default function Home() {
       <SectionImpacts />
       <SectionValues />
       <SectionProjects />
+      <SectionItmo />
     </main>
   );
 }
