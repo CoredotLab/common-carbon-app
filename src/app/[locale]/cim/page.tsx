@@ -10,7 +10,7 @@ import CimDetailInfo from "./components/detailInfo";
 export default function Home() {
   const t = useTranslations("Index");
   return (
-    <main className="flex flex-col min-w-[360px] max-w-[1440px] w-full py-[10px] px-[20px] items-center space-y-[10px]">
+    <main className="flex flex-col min-w-[360px] max-w-[1440px] w-full py-[10px] px-[20px] items-center space-y-[10px] mt-[70px] mx-auto">
       <Title />
       <Filter />
       <div className="min-h-[750px] w-full flex md:flex-row flex-col md:space-x-[30px] md:space-y-[0px] space-y-[30px]">
