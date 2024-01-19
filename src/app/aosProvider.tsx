@@ -13,6 +13,7 @@ export default function AOSProvider({
     AOS.init({
       once: true,
       duration: 1500,
+      delay: 150,
     });
   }, []);
 
