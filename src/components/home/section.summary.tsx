@@ -10,7 +10,7 @@ export default function SectionSummary() {
             Contact
           </span>
           <span className="xl:text-[16px] text-[14px] font-[300] text-white">
-            contact : kwangnam.ryu.kor@gmail.com
+            contact : kwangnamryu@ourfuture.kr
           </span>
         </div>
         <div className="flex flex-col space-y-[20px]">

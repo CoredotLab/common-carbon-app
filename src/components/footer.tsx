@@ -27,7 +27,7 @@ export default function Footer() {
           color: isHome ? "#fff" : "#000",
         }}
       >
-        contact : kwangnam.ryu.kor@gmail.com
+        contact : kwangnamryu@ourfuture.kr
       </span>
     </footer>
   );
