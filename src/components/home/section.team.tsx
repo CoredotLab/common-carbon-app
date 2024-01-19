@@ -11,9 +11,9 @@ export default function SectionTeam() {
           </span>
           <div className="flex xl:flex-row flex-col xl:space-x-[96px] xl:space-y-[0px] space-y-[30px] items-center">
             {/* 우미래 */}
-            <div className="relative w-[168px] h-[60px]">
+            <div className="relative xl:w-[168px] w-[84px] xl:h-[60px] h-[30px]">
               <Image
-                src="/home/logo_umirae.png"
+                src="/home/logo_umirae2.png"
                 layout="fill"
                 objectFit="contain"
                 alt="partner image"
@@ -21,7 +21,7 @@ export default function SectionTeam() {
               />
             </div>
             {/* 코어다트랩 */}
-            <div className="relative w-[212px] h-[30px]">
+            <div className="relative xl:w-[212px] w-[106px] xl:h-[30px] h-[15px]">
               <Image
                 src="/logo_coredotlab.png"
                 layout="fill"
@@ -31,7 +31,7 @@ export default function SectionTeam() {
               />
             </div>
             {/* 식스티헤르츠 */}
-            <div className="relative w-[151px] h-[40px]">
+            <div className="relative xl:w-[151px] xl:h-[40px] w-[75px] h-[20px]">
               <Image
                 src="/home/logo_60.png"
                 layout="fill"
@@ -50,7 +50,7 @@ export default function SectionTeam() {
           </span>
           <div className="flex xl:flex-row flex-col xl:space-x-[96px] xl:space-y-[0px] space-y-[30px] items-center">
             {/* avpn */}
-            <div className="relative w-[72px] h-[40px]">
+            <div className="relative xl:w-[72px] xl:h-[40px] w-[36px] h-[20px]">
               <Image
                 src="/home/logo_avpn.png"
                 layout="fill"
@@ -60,7 +60,7 @@ export default function SectionTeam() {
               />
             </div>
             {/* google org */}
-            <div className="relative w-[188px] h-[40px]">
+            <div className="relative xl:w-[188px] xl:h-[40px] w-[94px] h-[20px]">
               <Image
                 src="/home/logo_google.png"
                 layout="fill"
@@ -70,7 +70,7 @@ export default function SectionTeam() {
               />
             </div>
             {/* adb */}
-            <div className="relative w-[62px] h-[40px]">
+            <div className="relative xl:w-[62px] xl:h-[40px] w-[31px] h-[20px]">
               <Image
                 src="/home/logo_adb.png"
                 layout="fill"

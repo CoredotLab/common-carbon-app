@@ -36,7 +36,7 @@ export default function SectionItmo() {
         </div>
         <div className="relative xl:hidden w-[300px] h-[530px]">
           <Image
-            src="/home/itmo_mobile.png"
+            src="/home/itmo_mobile2.png"
             layout="fill"
             objectFit="contain"
             alt="itmo image"

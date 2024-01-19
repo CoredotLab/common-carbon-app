@@ -1,6 +1,13 @@
 "use client";
 import Image from "next/image";
 import { useState } from "react";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Navigation, Scrollbar, Autoplay } from "swiper/modules";
+import SwiperCore from "swiper";
+import "swiper/css";
+import "swiper/css/navigation";
+import "swiper/css/pagination";
+import { t } from "i18next";
 
 export default function SectionImpacts() {
   return (
@@ -54,20 +61,15 @@ function ImpactInformations() {
       scoreTitleS: "carbon impact",
     },
   ];
+  SwiperCore.use([Navigation, Scrollbar, Autoplay]);
+  const [swiperRef, setSwiperRef] = useState<SwiperCore>();
 
   const handleArrowClick = (direction: "left" | "right") => {
+    if (!swiperRef) return;
     if (direction === "left") {
-      if (scoreIndex === 0) {
-        setScoreIndex(scoreCards.length - 1);
-      } else {
-        setScoreIndex(scoreIndex - 1);
-      }
+      swiperRef.slidePrev();
     } else {
-      if (scoreIndex === scoreCards.length - 1) {
-        setScoreIndex(0);
-      } else {
-        setScoreIndex(scoreIndex + 1);
-      }
+      swiperRef.slideNext();
     }
   };
 
@@ -98,18 +100,51 @@ function ImpactInformations() {
             />
           </div>
 
-          <span className="xl:text-[40px] text-[24px] font-[600] text-white">
+          {/* <span className="xl:text-[40px] text-[24px] font-[600] text-white">
             {scoreCards[scoreIndex].scoreText}
           </span>
           <span className="xl:text-[18px] text-[14px] font-[400] text-white">
             {scoreCards[scoreIndex].scoreTitleF}
             <br />
             {scoreCards[scoreIndex].scoreTitleS}
-          </span>
+          </span> */}
 
+          <Swiper
+            slidesPerView={1}
+            navigation={false}
+            onSlideChange={(swiper) => {
+              setScoreIndex(swiper.activeIndex);
+            }}
+            onSwiper={(swiper) => {
+              setSwiperRef(swiper);
+            }}
+            loop={true}
+            autoplay={{
+              delay: 3000,
+              disableOnInteraction: false,
+            }}
+            className="xl:max-w-[460px] max-w-[300px] flex items-center justify-center my-auto"
+          >
+            {scoreCards.map((scoreCard, index) => (
+              <SwiperSlide key={index}>
+                <div className="flex items-center justify-center w-full xl:space-x-[50px] space-x-[25px]">
+                  <span className="xl:text-[40px] text-[24px] font-[600] text-white">
+                    {scoreCard.scoreText}
+                  </span>
+                  <span className="xl:text-[18px] text-[14px] font-[400] text-white">
+                    {scoreCard.scoreTitleF}
+                    <br />
+                    {scoreCard.scoreTitleS}
+                  </span>
+                </div>
+              </SwiperSlide>
+            ))}
+          </Swiper>
           <div
             className="relative w-[24px] h-[24px] cursor-pointer"
-            onClick={() => handleArrowClick("right")}
+            onClick={() => {
+              handleArrowClick("right");
+            }}
           >
             <Image
               src="/icon_chevron_right.svg"
