@@ -10,6 +10,7 @@ export default function SideMenu() {
   const setMenuState = useSetRecoilState(menuState);
   const sideMenuClass = valueMenuState ? "translate-x-0" : "-translate-x-full";
   const path = usePathname();
+  const isHome = path === "/en" || path === "/ko";
 
   const isActive = (_path: string) => {
     const pathSplit = path.split("/");
@@ -27,8 +28,16 @@ export default function SideMenu() {
       {valueMenuState && (
         <div
           className={`md:hidden flex flex-col space-y-[40px] fixed top-0 right-0 h-full bg-white w-[200px] z-50 transform transition-transform ${sideMenuClass} border border-l-[1px] border-[#000000] border-opacity-[20%]`}
+          style={{
+            backgroundColor: isHome ? "#001D03" : "#fff",
+          }}
         >
-          <div className="flex items-center h-[70px] px-[20px] border border-b-[1px] border-[#000000] border-opacity-[20%]">
+          <div
+            className="flex items-center h-[70px] px-[20px] border border-b-[1px] border-[#000000] border-opacity-[20%]"
+            style={{
+              borderBottomColor: isHome ? "#CECECE" : "#000",
+            }}
+          >
             <button
               onClick={() => setMenuState(false)}
               className="w-[24px] h-[24px] flex justify-center items-center"
@@ -38,10 +47,18 @@ export default function SideMenu() {
                 alt="icon_close"
                 width={20}
                 height={20}
+                style={{
+                  filter: isHome ? "brightness(0) invert(1)" : "none",
+                }}
               />
             </button>
           </div>
-          <nav className="flex flex-col  justify-center items-center">
+          <nav
+            className="flex flex-col  justify-center items-center"
+            style={{
+              color: isHome ? "#fff" : "#000",
+            }}
+          >
             <Link
               href="/"
               className={`w-full h-[60px] flex justify-center items-center ${isActive(
