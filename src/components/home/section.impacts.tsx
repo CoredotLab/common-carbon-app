@@ -118,7 +118,6 @@ function ImpactInformations() {
             onSwiper={(swiper) => {
               setSwiperRef(swiper);
             }}
-            loop={true}
             autoplay={{
               delay: 3000,
               disableOnInteraction: false,
