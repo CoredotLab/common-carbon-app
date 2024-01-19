@@ -13,7 +13,7 @@ export default function SectionTeam() {
             {/* 우미래 */}
             <div className="relative xl:w-[168px] w-[84px] xl:h-[60px] h-[30px]">
               <Image
-                src="/home/logo_umirae2.png"
+                src="/home/logo_umirae3.png"
                 layout="fill"
                 objectFit="contain"
                 alt="partner image"
