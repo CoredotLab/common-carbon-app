@@ -4,7 +4,7 @@ export default function SectionValues() {
   return (
     <main className="w-full flex flex-col py-[40px] justify-center items-center space-y-[20px] bg-[#F9F7C9]">
       <span className="xl:pt-[40px] pt-[20px] pb-[20px] text-[#133334] xl:text-[30px] text-[20px] font-[600]">
-        Be transparent and efficient
+        Transparency x Efficiency = Impact
       </span>
       <Values />
     </main>
@@ -25,22 +25,22 @@ function Values() {
       image: "/home/value_transparency.png",
       title: "Data Transparency",
       description1: "Carbon Impact MAP. ",
-      description2: "Track carbon reductions ",
-      description3: "around the world",
+      description2: "We track and identify",
+      description3: "honest carbon reductions.",
     },
     {
       image: "/home/value_efficiency.png",
       title: "Operational Efficiency",
-      description1: "Carbon AI helps you create",
-      description2: "a PDD(Document)",
-      description3: "to make it easier to start business.",
+      description1: "Embrace the power of GPT ",
+      description2: "in your carbon solution documents.",
+      description3: " ",
     },
     {
       image: "/home/value_together.png",
-      title: "building together",
-      description1: "Innovative technology produces",
-      description2: "high quality results.",
-      description3: "Make world better.",
+      title: "Endurance",
+      description1: "Join our Coalition, ",
+      description2: "before we join you",
+      description3: " ",
     },
   ];
   return (

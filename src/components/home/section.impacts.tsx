@@ -80,8 +80,8 @@ function ImpactInformations() {
           Common Carbon Impacts
         </span>
         <span className="text-white xl:text-[18px] text-[14px] font-[500] xl:max-w-[600px]">
-          Common Carbon was launched in 2024 and is dedicated to striving for
-          carbon neutrality for our planet.
+          Common Carbon was launched in 2024. It is dedicated to galvanizing
+          clean tech businesses across Asia and beyond.
         </span>
       </div>
       {/* scores cards */}
