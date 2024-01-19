@@ -12,7 +12,7 @@ export default function SectionMain() {
     >
       <div className="xl:flex hidden min-h-[347px] flex-shrink-0 w-full"></div>
       <div className="flex w-full h-full z-10 flex-col justify-center text-white max-w-[1440px] mx-auto">
-        <div className="flex flex-col space-y-[10px]">
+        <div className="flex flex-col space-y-[10px]" data-aos="fade">
           <span className="text-[40px] font-[600]">
             Reviving Our World Through Innovation
           </span>

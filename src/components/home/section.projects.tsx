@@ -10,7 +10,10 @@ export default function SectionProjects() {
       {/* cim */}
       <div className="w-full bg-[#FFFEF2] flex items-center justify-center">
         <div className="w-full max-w-[1440px] flex xl:flex-row flex-col xl:space-x-[60px] items-center">
-          <div className="relative xl:h-[500px] h-[240px] xl:w-[700px] w-[340px]">
+          <div
+            className="relative xl:h-[500px] h-[240px] xl:w-[700px] w-[340px]"
+            data-aos="fade"
+          >
             <Image
               src="/home/project_cim.png"
               layout="fill"
@@ -40,7 +43,10 @@ export default function SectionProjects() {
       {/* cal */}
       <div className="w-full bg-[#B1D2D2] flex items-center justify-center min-h-[500px]">
         <div className="w-full max-w-[1440px] flex xl:flex-row-reverse flex-col items-center xl:px-[100px]">
-          <div className="relative xl:h-[380px] h-[250px] xl:w-[454px] w-[300px] xl:ml-[160px]">
+          <div
+            className="relative xl:h-[380px] h-[250px] xl:w-[454px] w-[300px] xl:ml-[160px]"
+            data-aos="fade"
+          >
             <Image
               src="/home/project_cal.png"
               layout="fill"
@@ -70,7 +76,10 @@ export default function SectionProjects() {
       {/* pdd */}
       <div className="w-full bg-[#F7CE65] flex items-center justify-center min-h-[500px]">
         <div className="w-full max-w-[1440px] flex xl:flex-row flex-col items-center xl:px-[100px] xl:space-x-[200px]">
-          <div className="relative xl:h-[380px] h-[250px] xl:w-[454px] w-[300px]">
+          <div
+            className="relative xl:h-[380px] h-[250px] xl:w-[454px] w-[300px]"
+            data-aos="fade"
+          >
             <Image
               src="/home/project_pdd.png"
               layout="fill"

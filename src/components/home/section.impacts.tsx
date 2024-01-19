@@ -15,7 +15,10 @@ export default function SectionImpacts() {
 
 function ImpactImage() {
   return (
-    <div className="relative xl:h-[500px] xl:w-[540px] w-full max-w-[500px] aspect-[540/500]">
+    <div
+      className="relative xl:h-[500px] xl:w-[540px] w-full max-w-[500px] aspect-[540/500]"
+      data-aos="fade"
+    >
       <Image
         src="/home/image_impact.png"
         fill
