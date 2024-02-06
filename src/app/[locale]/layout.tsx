@@ -14,7 +14,7 @@ const pretendard = localFont({
 });
 
 const suit = localFont({
-  src: "../../Suit-Variable.ttf",
+  src: "../../SuitVariable.ttf",
   display: "swap",
   variable: "--font-suit",
 });
