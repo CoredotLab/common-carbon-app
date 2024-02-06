@@ -11,6 +11,7 @@ export default function Header() {
   const setMenuState = useSetRecoilState(menuState);
   const valueMenuState = useRecoilValue(menuState);
   const isHome = path === "/en" || path === "/ko";
+  const isCarbonai = path === "/en/carbonai" || path === "/ko/carbonai";
 
   const isActive = (_path: string) => {
     const pathSplit = path.split("/");
@@ -29,7 +30,7 @@ export default function Header() {
 
   return (
     <>
-      {isHome ? (
+      {isHome || isCarbonai ? (
         <header className="absolute h-[70px] top-0 w-full min-w-[360px] flex justify-between items-center bg-transparent z-50">
           <div className="flex flex-col justify-center xl:ml-[40px] ml-[20px]">
             <Link href="/" className="relative w-[220px] h-[22px]">
@@ -48,6 +49,12 @@ export default function Header() {
               className={`w-[76px] flex justify-center ${isActive("")}`}
             >
               HOME
+            </Link>
+            <Link
+              href="/carbonai"
+              className={`w-[76px] flex justify-center ${isActive("carbonai")}`}
+            >
+              CarbonAI
             </Link>
             <Link
               href="/cim"
@@ -74,16 +81,6 @@ export default function Header() {
               }}
             >
               PDD
-            </Link>
-            <Link
-              href="/cim"
-              className={`w-[76px] flex justify-center ${isActive("profile")}`}
-              onClick={() => {
-                alert("Service will be available soon!");
-                setMenuState(false);
-              }}
-            >
-              Profile
             </Link>
           </nav>
           <div className="xl:hidden pr-[20px] flex">
@@ -122,6 +119,12 @@ export default function Header() {
               HOME
             </Link>
             <Link
+              href="/carbonai"
+              className={`w-[76px] flex justify-center ${isActive("carbonai")}`}
+            >
+              CarbonAI
+            </Link>
+            <Link
               href="/cim"
               className={`w-[76px] flex justify-center ${isActive("cim")}`}
             >
@@ -146,16 +149,6 @@ export default function Header() {
               }}
             >
               PDD
-            </Link>
-            <Link
-              href="/cim"
-              className={`w-[76px] flex justify-center ${isActive("profile")}`}
-              onClick={() => {
-                alert("Service will be available soon!");
-                setMenuState(false);
-              }}
-            >
-              Profile
             </Link>
           </nav>
           <div className="md:hidden pr-[20px]">

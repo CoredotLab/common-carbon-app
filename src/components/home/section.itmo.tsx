@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 
 export default function SectionItmo() {
   return (
@@ -18,12 +19,12 @@ export default function SectionItmo() {
               United Nations Framework Convention on Climate Change (UNFCCC) and
               the Paris Agreement.
             </span>
-            <button
+            <Link
               className="w-[240px] h-[36px] bg-[#157593] text-white p-[10px] flex items-center justify-center text-[14px] font-[600] flex-shrink-0"
-              onClick={() => alert("Service will be available soon!")}
+              href="/en/carbonai"
             >
               Learn More
-            </button>
+            </Link>
           </div>
         </div>
         <div className="relative xl:flex hidden w-[1020px] h-[546px]">

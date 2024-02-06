@@ -4,19 +4,21 @@ import { usePathname } from "next/navigation";
 export default function Footer() {
   const path = usePathname();
   const isHome = path === "/en" || path === "/ko";
+  const isCarbonai = path === "/en/carbonai" || path === "/ko/carbonai";
+  const isHomeCarbonai = isHome || isCarbonai;
 
   return (
     <footer
       className="hidden md:flex w-full justify-between items-center py-[23px] px-[20px] border-t-[1px] border-app_gray"
       style={{
-        backgroundColor: isHome ? "#001D03" : "#fff",
-        borderColor: isHome ? "#CECECE" : "#fff",
+        backgroundColor: isHomeCarbonai ? "#001D03" : "#fff",
+        borderColor: isHomeCarbonai ? "#CECECE" : "#fff",
       }}
     >
       <span
         className="text-[14px] font-[300] -tracking-[0.28px]"
         style={{
-          color: isHome ? "#fff" : "#000",
+          color: isHomeCarbonai ? "#fff" : "#000",
         }}
       >
         © 2024 CommonCarbon.ai. or its affiliates. The commoncarbon.ai project
@@ -27,7 +29,7 @@ export default function Footer() {
       <span
         className="text-[14px] font-[300] -tracking-[0.28px]"
         style={{
-          color: isHome ? "#fff" : "#000",
+          color: isHomeCarbonai ? "#fff" : "#000",
         }}
       >
         contact : kwangnamryu@ourfuture.kr

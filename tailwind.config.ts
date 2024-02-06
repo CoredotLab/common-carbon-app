@@ -10,6 +10,7 @@ const config: Config = {
     extend: {
       fontFamily: {
         pretendard: ["var(--font-pretendard)"],
+        suit: ["var(--font-suit)"],
       },
       colors: {
         primary: "#05B99C",
