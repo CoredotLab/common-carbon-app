@@ -19,7 +19,10 @@ export default function Footer() {
           color: isHome ? "#fff" : "#000",
         }}
       >
-        Common Carbon
+        © 2024 CommonCarbon.ai. or its affiliates. The commoncarbon.ai project
+        authors. All rights reserved. <br />
+        G708, 115, Heyground, Wangsimni-ro, Seongdong-gu, Seoul, Republic of
+        Korea
       </span>
       <span
         className="text-[14px] font-[300] -tracking-[0.28px]"
