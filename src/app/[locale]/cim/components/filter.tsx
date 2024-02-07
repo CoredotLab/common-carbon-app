@@ -22,8 +22,8 @@ export default function Filter() {
 }
 
 interface AC {
-  id: number;
-  name: string;
+  ac_id: number;
+  ac_name: string;
 }
 
 function AcquiringCountry() {
@@ -53,7 +53,7 @@ function AcquiringCountry() {
       if (response.status === 200) {
         const countries = response.data;
         // add "All" to the beginning of the array
-        countries.unshift({ id: 0, name: "All" });
+        countries.unshift({ ac_id: 0, ac_name: "All" });
         setCountries(countries);
       }
     } catch (error) {}
@@ -85,9 +85,9 @@ function AcquiringCountry() {
               <div
                 key={index}
                 className="p-1 hover:bg-gray-200 cursor-pointer px-[20px] z-40"
-                onClick={() => handleSelectCountry(country.name)}
+                onClick={() => handleSelectCountry(country.ac_name)}
               >
-                {country.name}
+                {country.ac_name}
               </div>
             ))}
           </div>
@@ -98,8 +98,8 @@ function AcquiringCountry() {
 }
 
 interface HC {
-  id: number;
-  name: string;
+  hc_id: number;
+  hc_name: string;
 }
 
 function HostCountry() {
@@ -129,7 +129,7 @@ function HostCountry() {
       if (response.status === 200) {
         const countries = response.data;
         // add "All" to the beginning of the array
-        countries.unshift({ id: 0, name: "All" });
+        countries.unshift({ hc_id: 0, hc_name: "All" });
         setCountries(countries);
       }
     } catch (error) {}
@@ -161,9 +161,9 @@ function HostCountry() {
               <div
                 key={index}
                 className="p-1 hover:bg-gray-200 cursor-pointer px-[20px] z-40"
-                onClick={() => handleSelectCountry(country.name)}
+                onClick={() => handleSelectCountry(country.hc_name)}
               >
-                {country.name}
+                {country.hc_name}
               </div>
             ))}
           </div>
@@ -174,8 +174,8 @@ function HostCountry() {
 }
 
 interface MT {
-  id: number;
-  name: string;
+  mt_id: number;
+  mt_name: string;
 }
 
 function MitigationTechnology() {
@@ -205,7 +205,7 @@ function MitigationTechnology() {
       if (response.status === 200) {
         const countries = response.data;
         // add "All" to the beginning of the array
-        countries.unshift({ id: 0, name: "All" });
+        countries.unshift({ mt_id: 0, mt_name: "All" });
         setCountries(countries);
       }
     } catch (error) {}
@@ -237,9 +237,9 @@ function MitigationTechnology() {
               <div
                 key={index}
                 className="p-1 hover:bg-gray-200 cursor-pointer px-[20px]"
-                onClick={() => handleSelectCountry(country.name)}
+                onClick={() => handleSelectCountry(country.mt_name)}
               >
-                {country.name}
+                {country.mt_name}
               </div>
             ))}
           </div>

@@ -13,7 +13,8 @@ interface TableRow {
   mt: string;
   projectTitle: string;
   reduction: number;
-  company: string;
+  company_ac: string;
+  company_hc: string;
   methodology: string;
   startDate: string;
   endDate: string;
@@ -26,14 +27,15 @@ interface TableRowResponse {
   mt: string;
   title: string;
   reduction: number;
-  company: string;
+  company_ac: string;
+  company_hc: string;
   methodology: string;
   m_start: string;
   m_end: string;
   id: number;
   lat: number;
   long: number;
-  l_name: string;
+  
 }
 
 // 표에 필요한 내용 ac, hc, mt, project title, reduction, company, methodology, startdate, enddate
@@ -79,7 +81,8 @@ export default function CimDetailInfo() {
               mt: row.mt,
               projectTitle: row.title,
               reduction: row.reduction,
-              company: row.company,
+              company_ac: row.company_ac,
+              company_hc: row.company_hc,
               methodology: row.methodology,
               startDate: row.m_start,
               endDate: row.m_end,
@@ -127,7 +130,10 @@ export default function CimDetailInfo() {
                   Project Title
                 </th>
                 <th className="border border-r-1 text-start p-[10px]">
-                  Company Name
+                  Company Name(AC)
+                </th>
+                <th className="border border-r-1 text-start p-[10px]">
+                  Company Name(HC)
                 </th>
                 <th className="border border-r-1 text-start p-[10px]">
                   Methodology
@@ -163,7 +169,8 @@ export default function CimDetailInfo() {
                   <td className="pl-[10px]">{data.hc}</td>
                   <td className="pl-[10px]">{data.mt}</td>
                   <td className="pl-[10px]">{data.projectTitle}</td>
-                  <td className="pl-[10px]">{data.company}</td>
+                  <td className="pl-[10px]">{data.company_ac}</td>
+                  <td className="pl-[10px]">{data.company_hc}</td>
                   <td className="pl-[10px]">{data.methodology}</td>
                   <td className="pl-[10px]">{data.startDate}</td>
                   <td className="pl-[10px]">{data.endDate}</td>

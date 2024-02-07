@@ -30,7 +30,7 @@ enum Technology {
   NaturalGas = "Natural Gas",
   Cookstove = "Cookstove",
   Solar = "Solar",
-  Led = "Led",
+  Led = "LED",
 }
 
 interface GraphResponse {
@@ -171,7 +171,7 @@ export default function CimGraph() {
           </ResponsiveContainer>
         </div>
         {/* 색인 */}
-        <div className="w-[105px] flex flex-col h-full space-y-[5px] justify-center shrink-0">
+        <div className="w-[105px] flex flex-col h-full space-y-[0px] justify-start shrink-0">
           {usedTechnology.includes(Technology.Hydro) && (
             <div className="flex space-x-[6px] px-[6px] items-center">
               <div className="w-[8px] h-[8px] bg-[#8884d8] rounded-[100px] shrink-0"></div>

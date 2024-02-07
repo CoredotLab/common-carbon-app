@@ -38,49 +38,58 @@ export default function CimTable() {
     if (hcValue !== "All") urlParams.append("hc", hcValue);
     if (mtValue !== "All") urlParams.append("mt", mtValue);
 
+    
+
     const url = `${
       process.env.NEXT_PUBLIC_API_URL
     }/table?${urlParams.toString()}`;
+
+    console.log(url);
 
     const requestTableData = async () => {
       try {
         const response = await axios.get(url);
         if (response.status === 200) {
           const data = response.data as TableResponse;
+          
           setTableSubject(data.subject);
 
           // object to array
-          const keyArray = Object.keys(data.data);
-          const valueArray = Object.values(data.data) as number[];
+          // const keyArray = Object.keys(data.data);
+          // const valueArray = Object.values(data.data) as number[];
 
-          const tableData = keyArray.map((key, index) => {
-            return { row: key, reduction: valueArray[index] } as RowResponse;
-          });
+          // const tableData = keyArray.map((key, index) => {
+          //   return { row: key, reduction: valueArray[index] } as RowResponse;
+          // });
 
-          const sortedTableData = tableData.sort((a, b) => {
-            return Number(b.reduction) - Number(a.reduction);
-          });
+          const tableData = data.data as RowResponse[];
+
+          // const sortedTableData = tableData.sort((a, b) => {
+          //   return Number(b.reduction) - Number(a.reduction);
+          // });
 
           // innerWidth가 768px 이상이면 최대 15개. 15개 안될경우 빈칸으로 채움
           // innerWidth가 768px 미만이면 최대 15개. 빈칸 안채움.
           const innerWidthOrg = window.innerWidth;
-          if (sortedTableData.length > 15) {
-            setTableData(sortedTableData.slice(0, 15));
+          if (tableData.length > 15) {
+            setTableData(tableData.slice(0, 15));
           } else {
             if (innerWidthOrg >= 768) {
-              const emptyArray = Array(15 - sortedTableData.length).fill({
+              const emptyArray = Array(15 - tableData.length).fill({
                 row: "",
                 reduction: -1,
               });
 
-              setTableData(sortedTableData.concat(emptyArray));
+              setTableData(tableData.concat(emptyArray));
             } else {
-              setTableData(sortedTableData);
+              setTableData(tableData);
             }
           }
 
           // calculate total reduction
-          const totalReduction = valueArray.reduce((a, b) => a + b, 0);
+          const totalReduction = tableData.reduce((acc, cur) => {
+            return acc + cur.reduction;
+          }, 0);
           setTotalReduction(totalReduction);
         }
       } catch (error) {}

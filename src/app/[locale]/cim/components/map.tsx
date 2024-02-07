@@ -96,21 +96,21 @@ export default function CimMap() {
                 ["linear"],
                 ["get", "reduction"],
                 0,
-                5, // 0 reduction - radius 5
-                500,
-                8, // 500 reduction - radius 10
-                1000,
-                11, // 1000 reduction - radius 15
+                13, // 0 reduction - radius 5
+                2000,
+                15, // 500 reduction - radius 10
+                2500,
+                17, // 1000 reduction - radius 15
                 3000,
-                14, // 3000 reduction - radius 20
+                19, // 3000 reduction - radius 20
                 5000,
-                17, // 5000 reduction - radius 25
+                21, // 5000 reduction - radius 25
                 30000,
-                20, // 30000 reduction - radius 30
+                23, // 30000 reduction - radius 30
                 100000,
-                23, // 100000 reduction - radius 35
+                25, // 100000 reduction - radius 35
                 500000,
-                26, // 500000 reduction - radius 40
+                27, // 500000 reduction - radius 40
                 1000000,
                 29, // 1000000 reduction - radius 45
               ],
@@ -134,6 +134,8 @@ export default function CimMap() {
               ],
               "text-size": 12,
               "text-allow-overlap": true,
+              "text-ignore-placement": true,
+              "text-anchor": "center",
             }}
             paint={{
               "text-color": "#fff",
