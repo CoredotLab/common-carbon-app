@@ -63,12 +63,8 @@ export default function Header() {
               CIM
             </Link>
             <Link
-              href="/cim"
+              href="/cal"
               className={`w-[76px] flex justify-center ${isActive("cal")}`}
-              onClick={() => {
-                alert("Service will be available soon!");
-                setMenuState(false);
-              }}
             >
               CAL
             </Link>
@@ -131,12 +127,8 @@ export default function Header() {
               CIM
             </Link>
             <Link
-              href="/cim"
+              href="/cal"
               className={`w-[76px] flex justify-center ${isActive("cal")}`}
-              onClick={() => {
-                alert("Service will be available soon!");
-                setMenuState(false);
-              }}
             >
               CAL
             </Link>

@@ -88,14 +88,10 @@ export default function SideMenu() {
               CIM
             </Link>
             <Link
-              href="/"
+              href="/cal"
               className={`w-full h-[60px] flex justify-center items-center ${isActive(
                 "cal"
               )}`}
-              onClick={() => {
-                alert("Service will be available soon!");
-                setMenuState(false);
-              }}
             >
               CAL
             </Link>
