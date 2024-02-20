@@ -12,6 +12,17 @@ interface MessageState {
   teller: "user" | "server";
   isTyping: boolean; // 유저가 입력할 차례일 경우 true, 그리고 ... 애니메이션 보여준다.
   questionType: "objective" | "subjective";
+  currentScenario: Scenario;
+}
+
+enum Scenario {
+  SERVER_GREETING = "SERVER_GREETING",
+  USER_ANSWER_GREETING = "USER_ANSWER_GREETING",
+}
+
+interface SubjectiveAnswer {
+  answer: string;
+  nextScenario: Scenario;
 }
 
 export default function Home() {
@@ -22,8 +33,13 @@ export default function Home() {
     teller: "server",
     isTyping: false,
     questionType: "objective",
+    currentScenario: Scenario.SERVER_GREETING,
   });
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [isRequestGreeting, setIsRequestGreeting] = useState<boolean>(false);
+  const [subjectiveAnswers, setSubjectiveAnswers] = useState<
+    SubjectiveAnswer[]
+  >([]);
 
   const sendMessage = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -50,6 +66,77 @@ export default function Home() {
     setInputValue(e.target.value);
   };
 
+  const fetchGreeting = async () => {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/greeting`);
+    const reader = response.body?.getReader();
+
+    let receivedText = "";
+
+    return new ReadableStream({
+      async start(controller) {
+        function push() {
+          reader?.read().then(({ done, value }) => {
+            if (done) {
+              controller.close();
+              return;
+            }
+            const text = new TextDecoder().decode(value);
+            receivedText += text;
+
+            controller.enqueue(text);
+            push();
+          });
+        }
+        push();
+      },
+    });
+  };
+
+  useEffect(() => {
+    if (isRequestGreeting) {
+      return;
+    }
+    setIsRequestGreeting(true);
+    const handleFetchGreeting = async () => {
+      console.log("Fetching greeting...");
+      const stream = await fetchGreeting();
+      const reader = stream.getReader();
+      const chunks: string[] = [];
+
+      function read() {
+        reader.read().then(({ done, value }) => {
+          if (done) {
+            const message: IMessage = {
+              id: Date.now(),
+              text: chunks.join(""),
+              sender: "server",
+            };
+            setMessages((currentMessages) => [...currentMessages, message]);
+            return;
+          }
+          const text = chunks.join("");
+          if (text.includes("\n")) {
+            const parts = text.split("\n");
+            setMessages((currentMessages) => [
+              ...currentMessages,
+              { id: Date.now(), text: parts[0], sender: "server" },
+            ]);
+            chunks.length = 0;
+            chunks.push(parts[1]);
+          } else {
+            chunks.push(value);
+          }
+
+          read();
+        });
+      }
+
+      read();
+    };
+
+    handleFetchGreeting();
+  }, []);
+
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -69,7 +156,7 @@ export default function Home() {
           <span>Common Carbon AI Assistant</span>
         </div>
         <div
-          className="flex-1 p-4 overflow-y-auto flex-col flex"
+          className="flex-1 p-4 overflow-y-auto flex-col flex space-y-2"
           ref={scrollRef}
         >
           {messages.map((message) => (
