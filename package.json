@@ -25,6 +25,7 @@
     "react-device-detect": "^2.2.3",
     "react-dom": "^18",
     "react-i18next": "^13.5.0",
+    "react-loader-spinner": "^6.1.6",
     "react-map-gl": "^7.1.6",
     "react-scroll-to-bottom": "^4.2.0",
     "recharts": "^2.10.3",

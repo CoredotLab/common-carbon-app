@@ -1,6 +1,7 @@
 "use client";
 import Image from "next/image";
 import { useState, FormEvent, ChangeEvent, useEffect, useRef } from "react";
+import { InfinitySpin } from "react-loader-spinner";
 
 interface IMessage {
   id: number;
@@ -37,7 +38,7 @@ export default function Home() {
     isTyping: false,
     questionType: "objective",
     currentScenario: Scenario.SERVER_GREETING,
-    isServerThinking: false,
+    isServerThinking: true,
   });
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isRequestGreeting, setIsRequestGreeting] = useState<boolean>(false);
@@ -143,6 +144,12 @@ export default function Home() {
                 continue;
               }
               // console.log("parts[i]", parts[i]);
+              if (i === 0) {
+                setMessageState((prev) => ({
+                  ...prev,
+                  isServerThinking: false,
+                }));
+              }
               setMessages((currentMessages) => [
                 ...currentMessages,
                 { id: Date.now(), text: parts[i], sender: "server" },
@@ -310,6 +317,31 @@ export default function Home() {
           </button>
         </form>
       </div>
+      {
+        // 서버가 생각중일 때
+        messageState.isServerThinking && (
+          <div
+            className="
+            fixed
+            bottom-0
+            top-0
+            left-0
+            right-0
+            p-4
+            flex
+            items-center
+            justify-center
+            gap-4
+            flex-col
+          "
+          >
+            <InfinitySpin color="#05B99C" />
+            <span className="text-primary font-bold">
+              Common Carbon AI is thinking...
+            </span>
+          </div>
+        )
+      }
     </main>
   );
 }
