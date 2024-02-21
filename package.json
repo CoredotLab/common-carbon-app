@@ -30,6 +30,7 @@
     "react-scroll-to-bottom": "^4.2.0",
     "recharts": "^2.10.3",
     "recoil": "^0.7.7",
+    "shortid": "^2.2.16",
     "swiper": "^11.0.5"
   },
   "devDependencies": {
@@ -37,6 +38,7 @@
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "@types/react-scroll-to-bottom": "^4.2.4",
+    "@types/shortid": "^0.0.32",
     "autoprefixer": "^10.0.1",
     "eslint": "^8",
     "eslint-config-next": "14.0.3",

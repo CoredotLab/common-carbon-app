@@ -1,12 +1,16 @@
 "use client";
+import { randomInt } from "crypto";
 import Image from "next/image";
 import { useState, FormEvent, ChangeEvent, useEffect, useRef } from "react";
 import { InfinitySpin } from "react-loader-spinner";
+import shortid from "shortid";
 
 interface IMessage {
   id: number;
-  text: string;
+  text?: string;
   sender: "user" | "server";
+  type?: "image" | "button"; // null 이면 text
+  desc?: string; // image일 경우 url, button일 경우 href
 }
 
 interface MessageState {
@@ -113,15 +117,24 @@ export default function Home() {
           chunks.push(value);
           const text = chunks.join("");
           // console.log("text 222>> ", text);
-          console.log("value>>>>>", value);
+          // console.log("value>>>>>", value);
           if (done) {
             // console.log("Stream done.", chunks.join(""));
             const message: IMessage = {
-              id: Date.now(),
+              id: Date.now() + 1,
               text: chunks.join(""),
               sender: "server",
             };
             setMessages((currentMessages) => [...currentMessages, message]);
+            const chooseHostCountryOrNotMessage: IMessage = {
+              id: Date.now() + 2,
+              text: "Do you know where you want to host your project?",
+              sender: "server",
+            };
+            setMessages((currentMessages) => [
+              ...currentMessages,
+              chooseHostCountryOrNotMessage,
+            ]);
             setMessageState((prev) => ({
               ...prev,
               teller: "user",
@@ -129,7 +142,7 @@ export default function Home() {
             }));
             setMessages((currentMessages) => [
               ...currentMessages,
-              { id: Date.now(), text: "", sender: "user" },
+              { id: Date.now() + 3, text: "", sender: "user" },
             ]);
             getGreetingObjectiveAnswers();
 
@@ -152,7 +165,7 @@ export default function Home() {
               }
               setMessages((currentMessages) => [
                 ...currentMessages,
-                { id: Date.now(), text: parts[i], sender: "server" },
+                { id: Date.now() + i, text: parts[i], sender: "server" },
               ]);
             }
             chunks.length = 0;
@@ -190,17 +203,127 @@ export default function Home() {
     answer: string,
     nextScenario: Scenario
   ) => {
+    // 사용자 마지막 답변을 선택한 답변으로 변경 처리
+    const lastMessage = messages[messages.length - 1];
+    lastMessage.text = answer;
+    setMessages((prev) => [...prev.slice(0, -1), lastMessage]);
     setMessageState((prev) => ({
       ...prev,
       teller: "server",
-      isTyping: true,
-      questionType: "objective",
-      currentScenario: nextScenario,
+      isTyping: false,
     }));
-    setMessages((currentMessages) => [
-      ...currentMessages,
-      { id: Date.now(), text: answer, sender: "user" },
-    ]);
+    // TODO: 서버에 선택한 답변을 보내고, 다음 시나리오를 받아온다.
+    if (nextScenario === Scenario.CHOOSE_TECHNOLOGY) {
+      // host country 선택한 경우
+    }
+
+    if (nextScenario === Scenario.CHOOSE_TECHNOLOGY_ONLY) {
+      // host country 선택 안한 경우, mitigation technology 만 알고 있는 경우, 다음에 mitigation technology 선택.
+    }
+
+    if (nextScenario === Scenario.LEARN_MORE) {
+      // 아무것도 모르는 경우, CIM 설명 + CIM 링크(_blank)
+      handleFetchDontKnowAnything();
+    }
+  };
+
+  const fetchDontKnowAnything = async () => {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/greeting/dont-know-anything`
+    );
+    const reader = response.body?.getReader();
+
+    return new ReadableStream({
+      async start(controller) {
+        function push() {
+          reader?.read().then(({ done, value }) => {
+            if (done) {
+              controller.close();
+              return;
+            }
+            const text = new TextDecoder().decode(value);
+            controller.enqueue(text);
+            push();
+          });
+        }
+        push();
+      },
+    });
+  };
+
+  const handleFetchDontKnowAnything = async () => {
+    setMessageState((prev) => ({
+      ...prev,
+      isServerThinking: true,
+    }));
+    const stream = await fetchDontKnowAnything();
+    const reader = stream.getReader();
+    const chunks: string[] = [];
+    setMessageState((prev) => ({
+      ...prev,
+      isServerThinking: false,
+    }));
+
+    function read() {
+      reader.read().then(({ done, value }) => {
+        chunks.push(value);
+        const text = chunks.join("");
+        if (done) {
+          const message: IMessage = {
+            id: Date.now() + 1,
+            text: chunks.join(""),
+            sender: "server",
+          };
+          setMessages((currentMessages) => [...currentMessages, message]);
+          addCimImageToMessages();
+          addCimHrefToMessages();
+          return;
+        }
+        if (text.includes("\n")) {
+          const parts = text.split("\n");
+          const part_length = parts.length;
+          for (let i = 0; i < part_length - 1; i++) {
+            if (parts[i].trim() === "") {
+              continue;
+            }
+            setMessages((currentMessages) => [
+              ...currentMessages,
+              { id: Date.now() + i, text: parts[i], sender: "server" },
+            ]);
+          }
+          chunks.length = 0;
+          if (parts[part_length - 1].trim() === "") {
+          } else {
+            chunks.push(parts[part_length - 1]);
+          }
+        }
+
+        read();
+      });
+    }
+
+    read();
+  };
+
+  const addCimImageToMessages = () => {
+    const cimImageMessage: IMessage = {
+      id: Date.now(),
+      text: "The Carbon Impact Map (CIM) is a global map showcasing the current carbon reduction efforts worldwide, offering a detailed view of each country's carbon reductions by technology.",
+      sender: "server",
+      type: "image",
+      desc: "/cal/image_screenshot_cim.png",
+    };
+    setMessages((currentMessages) => [...currentMessages, cimImageMessage]);
+  };
+
+  const addCimHrefToMessages = () => {
+    const cimHrefMessage: IMessage = {
+      id: Date.now() + 100,
+      sender: "server",
+      type: "button",
+      desc: "/en/cim",
+    };
+    setMessages((currentMessages) => [...currentMessages, cimHrefMessage]);
   };
 
   return (
@@ -221,7 +344,7 @@ export default function Home() {
         >
           {messages.map((message) => (
             <div
-              key={message.id}
+              key={shortid.generate()}
               className={`p-2 rounded-lg ${
                 message.sender === "user"
                   ? "bg-white text-primary font-bold self-end text-right rounded-tr-none border border-gray-300 shadow-lg"
@@ -250,6 +373,31 @@ export default function Home() {
                   />
                 </div>
               )}
+              {
+                // 이미지 메시지
+                message.type === "image" && (
+                  <div
+                    className="mt-2 relative 
+                  w-[300px]
+                  h-[200px]
+                  "
+                  >
+                    <Image src={message.desc as string} alt="Image" fill />
+                  </div>
+                )
+              }
+              {
+                // 버튼 메시지
+                message.type === "button" && (
+                  <a
+                    href={message.desc as string}
+                    target="_blank"
+                    className="text-white font-bold py-2 px-4 rounded-[10px] border border-primary bg-primary hover:bg-white hover:text-primary transition-all duration-300 ease-in-out text-sm"
+                  >
+                    Learn more
+                  </a>
+                )
+              }
               {message.text}
             </div>
           ))}
