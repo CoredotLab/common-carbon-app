@@ -14,6 +14,7 @@ import shortid from "shortid";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { t } from "i18next";
+import { get } from "http";
 
 interface IMessage {
   id: number;
@@ -37,6 +38,8 @@ enum Scenario {
   CHOOSE_TECHNOLOGY_ONLY = "CHOOSE_TECHNOLOGY_ONLY", // 기술만 알아서, 기술 먼저 선택한 경우. 이후에 hc 추천해줌.
   LEARN_MORE = "LEARN_MORE", // 아무것도 모르는 경우 CIM 설명 + CIM 링크(_blank)
   ENTER_CAPACITY = "ENTER_CAPACITY", // 용량 입력
+  RECOMMEND_HC = "RECOMMEND_HC", // 기술만 알아서, 기술 먼저 선택한 경우. 이후에 hc 추천해줌.
+  ENTER_CAPACITY_2 = "ENTER_CAPACITY_2", // 용량 입력
 }
 
 interface ObjectiveAnswer {
@@ -276,6 +279,7 @@ export default function Home() {
       teller: "server",
       isTyping: false,
     }));
+
     // TODO: 서버에 선택한 답변을 보내고, 다음 시나리오를 받아온다.
     if (nextScenario === Scenario.CHOOSE_TECHNOLOGY) {
       // host country 선택한 경우
@@ -288,7 +292,27 @@ export default function Home() {
 
     if (nextScenario === Scenario.CHOOSE_TECHNOLOGY_ONLY) {
       // host country 선택 안한 경우, mitigation technology 만 알고 있는 경우, 다음에 mitigation technology 선택.
+      const message: IMessage = {
+        id: Date.now(),
+        text: "Please select the mitigation technology you are interested in. Available mitigation technologies are Solar for now.",
+        sender: "server",
+      };
+      setMessageState((prev) => ({
+        ...prev,
+        teller: "user",
+        isTyping: true,
+      }));
+      setMessages((currentMessages) => [...currentMessages, message]);
+      setMessages((currentMessages) => [
+        ...currentMessages,
+        { id: Date.now() + 3, text: "", sender: "user" },
+      ]);
+      getSelectMtObjectiveAnswers();
+    }
+
+    if (nextScenario === Scenario.RECOMMEND_HC) {
       setChoosenMt(answer);
+      await handleFetchSelectMtRecommendHc(answer);
     }
 
     if (nextScenario === Scenario.LEARN_MORE) {
@@ -301,6 +325,110 @@ export default function Home() {
       handleFetchSelectHcMtDesc(hc as string, answer);
       setChoosenMt(answer);
     }
+
+    if (nextScenario === Scenario.ENTER_CAPACITY_2) {
+      // 용량 입력
+      setChoosenHc(answer);
+      handleFetchSelectHcMtDesc(answer, choosenMt === "" ? "Solar" : choosenMt);
+    }
+  };
+
+  const fetchSelectMtRecommendHc = async (mt_name: string) => {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/selectmt/recommendhc?mt=${mt_name}`
+    );
+    const reader = response.body?.getReader();
+
+    return new ReadableStream({
+      async start(controller) {
+        function push() {
+          reader?.read().then(({ done, value }) => {
+            if (done) {
+              controller.close();
+              return;
+            }
+            const text = new TextDecoder().decode(value);
+            controller.enqueue(text);
+            push();
+          });
+        }
+        push();
+      },
+    });
+  };
+
+  const handleFetchSelectMtRecommendHc = async (mt_name: string) => {
+    const stream = await fetchSelectMtRecommendHc(mt_name);
+    const reader = stream.getReader();
+    const chunks: string[] = [];
+
+    function read() {
+      reader.read().then(({ done, value }) => {
+        chunks.push(value);
+        const text = chunks.join("");
+        if (done) {
+          const message: IMessage = {
+            id: Date.now() + 1,
+            text: chunks.join(""),
+            sender: "server",
+          };
+          setMessages((currentMessages) => [...currentMessages, message]);
+          setTimeout(() => {
+            const chooseHostCountry: IMessage = {
+              id: Date.now() + 2,
+              text: "Please select the host country you are interested in.",
+              sender: "server",
+            };
+            setMessageState((prev) => ({
+              ...prev,
+              teller: "server",
+              isTyping: false,
+            }));
+            setMessages((currentMessages) => [
+              ...currentMessages,
+              chooseHostCountry,
+            ]);
+            setMessageState((prev) => ({
+              ...prev,
+              teller: "user",
+              isTyping: true,
+            }));
+            setMessages((currentMessages) => [
+              ...currentMessages,
+              { id: Date.now() + 3, text: "", sender: "user" },
+            ]);
+            getSelectMtRecommendHcObjectiveAnswers();
+          }, 1000);
+          return;
+        }
+        if (text.includes("\n")) {
+          const parts = text.split("\n");
+          const part_length = parts.length;
+          for (let i = 0; i < part_length - 1; i++) {
+            if (parts[i].trim() === "") {
+              continue;
+            }
+            setMessageState((prev) => ({
+              ...prev,
+              isServerThinking: false,
+            }));
+            setMessages((currentMessages) => [
+              ...currentMessages,
+              { id: Date.now() + i, text: parts[i], sender: "server" },
+            ]);
+          }
+          chunks.length = 0;
+          if (parts[part_length - 1].trim() === "") {
+          } else {
+            chunks.push(parts[part_length - 1]);
+          }
+        }
+
+        read();
+      });
+    }
+
+    read();
   };
 
   const handleEnterCapacity = async (hc: string, mt: string) => {
@@ -590,6 +718,24 @@ export default function Home() {
     setObjectiveAnswers(data);
   };
 
+  const getSelectMtObjectiveAnswers = async () => {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/selectmt/objective`
+    );
+
+    const data = await response.json();
+    setObjectiveAnswers(data);
+  };
+
+  const getSelectMtRecommendHcObjectiveAnswers = async () => {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/selectmt/recommendhc/objective`
+    );
+
+    const data = await response.json();
+    setObjectiveAnswers(data);
+  };
+
   const fetchDontKnowAnything = async () => {
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_API_URL}/greeting/dont-know-anything`
@@ -816,6 +962,15 @@ export default function Home() {
   // downloadPdfFromServer("100000");
   // }, []);
 
+  useEffect(() => {
+    if (messageState.teller === "user") {
+      setMessageState((prev) => ({
+        ...prev,
+        isServerThinking: false,
+      }));
+    }
+  }, [messageState.teller]);
+
   return (
     <main className="flex flex-col items-center pt-20 px-4 pb-4 font-pretendard min-h-screen max-h-screen overflow-hidden">
       <div className="flex flex-col w-full bg-white max-w-[770px] rounded-lg shadow flex-grow overflow-hidden">
@@ -832,7 +987,7 @@ export default function Home() {
           className="flex-1 p-4 overflow-y-auto flex-col flex space-y-2"
           ref={scrollRef}
         >
-          {messages.map((message) => (
+          {messages.map((message, index) => (
             <div
               key={shortid.generate()}
               className={`p-2 rounded-lg ${
@@ -841,28 +996,30 @@ export default function Home() {
                   : "bg-primary text-black self-start rounded-tl-none bg-opacity-20 shadow-lg"
               } inline-block max-w-[90%] break-words`}
             >
-              {message.sender === "user" && messageState.isTyping && (
-                <div className="flex items-center gap-2 p-2">
-                  <div
-                    className="w-2 h-2 bg-primary rounded-full animate-bounce"
-                    style={{
-                      animationDelay: "0s",
-                    }}
-                  />
-                  <div
-                    className="w-2 h-2 bg-primary rounded-full animate-bounce"
-                    style={{
-                      animationDelay: "0.25s",
-                    }}
-                  />
-                  <div
-                    className="w-2 h-2 bg-primary rounded-full animate-bounce"
-                    style={{
-                      animationDelay: "0.5s",
-                    }}
-                  />
-                </div>
-              )}
+              {message.sender === "user" &&
+                messageState.isTyping &&
+                index === messages.length - 1 && (
+                  <div className="flex items-center gap-2 p-2">
+                    <div
+                      className="w-2 h-2 bg-primary rounded-full animate-bounce"
+                      style={{
+                        animationDelay: "0s",
+                      }}
+                    />
+                    <div
+                      className="w-2 h-2 bg-primary rounded-full animate-bounce"
+                      style={{
+                        animationDelay: "0.25s",
+                      }}
+                    />
+                    <div
+                      className="w-2 h-2 bg-primary rounded-full animate-bounce"
+                      style={{
+                        animationDelay: "0.5s",
+                      }}
+                    />
+                  </div>
+                )}
               {
                 // 이미지 메시지
                 message.type === "image" && (
