@@ -65,7 +65,7 @@ export default function SectionProjects() {
             </span>
             <button
               className="w-[120px] h-[36px] bg-primary text-white p-[10px] flex items-center justify-center text-[14px] font-[600]"
-              onClick={() => alert("Service will be available soon!")}
+              onClick={() => router.push("/en/cal")}
             >
               Learn More
             </button>
