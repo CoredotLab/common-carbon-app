@@ -82,7 +82,7 @@ export default function Home() {
         return;
       }
     }
-    console.log("inputValue", inputValue);
+    // console.log("inputValue", inputValue);
     setChoosenCapacity((prev) => inputValue);
 
     const lastMessage = messages[messages.length - 1];
@@ -96,7 +96,9 @@ export default function Home() {
       isTyping: false,
     }));
     setInputValue("");
-    handleAllInputed(choosenHc, choosenMt, capacity);
+    setTimeout(() => {
+      handleAllInputed(choosenHc, choosenMt, capacity);
+    }, 1000);
   };
 
   const handleAllInputed = async (hc: string, mt: string, capacity: string) => {
@@ -109,7 +111,7 @@ export default function Home() {
       addCimDescToMessages();
       addCimImageToMessages();
       addCimHrefToMessages();
-    }, 3000);
+    }, 5000);
   };
 
   const handleShowPdd = async (capacity: string) => {
@@ -120,13 +122,17 @@ export default function Home() {
       sender: "server",
     };
     setMessages((currentMessages) => [...currentMessages, message1]);
-    const message2: IMessage = {
-      id: Date.now(),
-      text: "PDD Report (Partial): A preliminary overview of your project's design document.",
-      sender: "server",
-    };
-    setMessages((currentMessages) => [...currentMessages, message2]);
-    addSampleHtmlTxtToMessages(capacity);
+    setTimeout(() => {
+      const message2: IMessage = {
+        id: Date.now(),
+        text: "PDD Report (Partial): A preliminary overview of your project's design document.",
+        sender: "server",
+      };
+      setMessages((currentMessages) => [...currentMessages, message2]);
+    }, 1000);
+    setTimeout(() => {
+      addSampleHtmlTxtToMessages(capacity);
+    }, 2000);
   };
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -165,7 +171,7 @@ export default function Home() {
     }
     setIsRequestGreeting(true);
     const handleFetchGreeting = async () => {
-      console.log("Fetching greeting...");
+      // console.log("Fetching greeting...");
       const stream = await fetchGreeting();
       const reader = stream.getReader();
       const chunks: string[] = [];
@@ -846,7 +852,7 @@ export default function Home() {
   };
 
   const addSampleHtmlTxtToMessages = (capacity: string) => {
-    console.log("choosenCapacity", choosenCapacity, capacity);
+    // console.log("choosenCapacity", choosenCapacity, capacity);
     const capacityValue = choosenCapacity === "" ? capacity : choosenCapacity;
     // fetch from server
     const url = `${process.env.NEXT_PUBLIC_API_URL}/example?hc=${choosenHc}&mt=${choosenMt}&capacity=${capacityValue}`;
@@ -892,8 +898,6 @@ export default function Home() {
     // 서버에서 HTML 콘텐츠를 가져옵니다.
     const response = await fetch(url);
     const htmlContent = await response.text();
-
-    console.log("htmlContent", htmlContent);
 
     // HTML 콘텐츠를 담을 임시 div를 생성합니다.
     const tempDiv = document.createElement("div");
@@ -954,7 +958,7 @@ export default function Home() {
       a.parentNode?.removeChild(a);
       window.URL.revokeObjectURL(downloadUrl);
     } catch (error) {
-      console.error("There was an error!", error);
+      // console.error("There was an error!", error);
     }
   };
 
@@ -1078,6 +1082,7 @@ export default function Home() {
                   src={message.text as string}
                   style={{
                     width: "75vw",
+                    maxWidth: "570px",
                     height: "90vw",
                     backgroundColor: "white",
                     padding: "20px",
