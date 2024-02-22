@@ -1,15 +1,25 @@
 "use client";
 import { randomInt } from "crypto";
 import Image from "next/image";
-import { useState, FormEvent, ChangeEvent, useEffect, useRef } from "react";
+import {
+  useState,
+  FormEvent,
+  ChangeEvent,
+  useEffect,
+  useRef,
+  use,
+} from "react";
 import { InfinitySpin } from "react-loader-spinner";
 import shortid from "shortid";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
+import { t } from "i18next";
 
 interface IMessage {
   id: number;
   text?: string;
   sender: "user" | "server";
-  type?: "image" | "button"; // null 이면 text
+  type?: "image" | "button" | "html" | "href"; // null 이면 text
   desc?: string; // image일 경우 url, button일 경우 href
 }
 
@@ -54,6 +64,8 @@ export default function Home() {
 
   const [choosenHc, setChoosenHc] = useState<string>("");
   const [choosenMt, setChoosenMt] = useState<string>("");
+  const [choosenCapacity, setChoosenCapacity] = useState<string>("");
+  const [htmlTxt, setHtmlTxt] = useState<string>("");
 
   const sendMessage = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -67,9 +79,12 @@ export default function Home() {
         return;
       }
     }
+    console.log("inputValue", inputValue);
+    setChoosenCapacity((prev) => inputValue);
 
     const lastMessage = messages[messages.length - 1];
     lastMessage.text = inputValue + " MWh/year";
+    const capacity = inputValue;
     setMessages((prev) => [...prev.slice(0, -1), lastMessage]);
     // 마지막 메시지 없애고, 사용자 메시지 추가
     setMessageState((prev) => ({
@@ -78,6 +93,37 @@ export default function Home() {
       isTyping: false,
     }));
     setInputValue("");
+    handleAllInputed(choosenHc, choosenMt, capacity);
+  };
+
+  const handleAllInputed = async (hc: string, mt: string, capacity: string) => {
+    // pdd 일부 보여주기
+    handleShowPdd(capacity);
+    // 조언
+
+    // cim 링크
+    setTimeout(() => {
+      addCimDescToMessages();
+      addCimImageToMessages();
+      addCimHrefToMessages();
+    }, 3000);
+  };
+
+  const handleShowPdd = async (capacity: string) => {
+    // 먼저 안내
+    const message1: IMessage = {
+      id: Date.now(),
+      text: "Congratulations on successfully completing all the questions! Please be patient just a little longer as I am now compiling the results for you.",
+      sender: "server",
+    };
+    setMessages((currentMessages) => [...currentMessages, message1]);
+    const message2: IMessage = {
+      id: Date.now(),
+      text: "PDD Report (Partial): A preliminary overview of your project's design document.",
+      sender: "server",
+    };
+    setMessages((currentMessages) => [...currentMessages, message2]);
+    addSampleHtmlTxtToMessages(capacity);
   };
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -271,6 +317,10 @@ export default function Home() {
       questionType: "subjective",
       currentScenario: Scenario.ENTER_CAPACITY,
     }));
+    setMessages((currentMessages) => [
+      ...currentMessages,
+      { id: Date.now() + 3, text: "", sender: "user" },
+    ]);
   };
 
   const fetchSelectHcMtDesc = async (hc_name: string, mt_name: string) => {
@@ -316,7 +366,9 @@ export default function Home() {
             sender: "server",
           };
           setMessages((currentMessages) => [...currentMessages, message]);
-          handleEnterCapacity(hc_name, mt_name);
+          setTimeout(() => {
+            handleEnterCapacity(hc_name, mt_name);
+          }, 1000);
           return;
         }
         if (text.includes("\n")) {
@@ -582,6 +634,7 @@ export default function Home() {
             sender: "server",
           };
           setMessages((currentMessages) => [...currentMessages, message]);
+          addCimDescToMessages();
           addCimImageToMessages();
           addCimHrefToMessages();
           return;
@@ -616,10 +669,19 @@ export default function Home() {
     read();
   };
 
+  const addCimDescToMessages = () => {
+    const cimDescMessage: IMessage = {
+      id: Date.now(),
+      text: "The Carbon Impact Map (CIM) is a global map showcasing the current carbon reduction efforts worldwide, offering a detailed view of each country's carbon reductions by technology.",
+      sender: "server",
+    };
+    setMessages((currentMessages) => [...currentMessages, cimDescMessage]);
+  };
+
   const addCimImageToMessages = () => {
     const cimImageMessage: IMessage = {
       id: Date.now(),
-      text: "The Carbon Impact Map (CIM) is a global map showcasing the current carbon reduction efforts worldwide, offering a detailed view of each country's carbon reductions by technology.",
+      text: "",
       sender: "server",
       type: "image",
       desc: "/cal/image_screenshot_cim.png",
@@ -631,11 +693,128 @@ export default function Home() {
     const cimHrefMessage: IMessage = {
       id: Date.now() + 100,
       sender: "server",
-      type: "button",
+      type: "href",
       desc: "/en/cim",
     };
     setMessages((currentMessages) => [...currentMessages, cimHrefMessage]);
   };
+
+  const addSampleHtmlTxtToMessages = (capacity: string) => {
+    console.log("choosenCapacity", choosenCapacity, capacity);
+    const capacityValue = choosenCapacity === "" ? capacity : choosenCapacity;
+    // fetch from server
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/example?hc=${choosenHc}&mt=${choosenMt}&capacity=${capacityValue}`;
+
+    fetch(url)
+      .then((response) => response.text())
+      .then((data) => {
+        const srcDoc = `data:text/html;charset=utf-8,${encodeURIComponent(
+          data
+        )}`;
+        setHtmlTxt(data);
+        const message: IMessage = {
+          id: Date.now(),
+          text: srcDoc,
+          sender: "server",
+          type: "html",
+        };
+        setMessages((currentMessages) => [...currentMessages, message]);
+        addDownloadPdfButtonToMessages();
+      });
+  };
+
+  const addDownloadPdfButtonToMessages = () => {
+    const downloadPdfButton: IMessage = {
+      id: Date.now(),
+      text: "Download PDD Report",
+      sender: "server",
+      type: "button",
+      desc: "downloadPdfButton",
+    };
+    setMessages((currentMessages) => [...currentMessages, downloadPdfButton]);
+  };
+
+  // useEffect(() => {
+  //   addSampleHtmlTxtToMessages();
+  // }, []);
+
+  const downloadPdfFromHtml = async (capacity: string) => {
+    const capacityValue = choosenCapacity === "" ? capacity : choosenCapacity;
+    // const url = `${process.env.NEXT_PUBLIC_API_URL}/example?hc=${choosenHc}&mt=${choosenMt}&capacity=${capacityValue}`;
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/example?hc=Vietnam&mt=Solar&capacity=100000`; // sample
+
+    // 서버에서 HTML 콘텐츠를 가져옵니다.
+    const response = await fetch(url);
+    const htmlContent = await response.text();
+
+    console.log("htmlContent", htmlContent);
+
+    // HTML 콘텐츠를 담을 임시 div를 생성합니다.
+    const tempDiv = document.createElement("div");
+    tempDiv.innerHTML = htmlContent;
+    // tempDiv.style.visibility = "hidden";
+    // tempDiv.style.opacity = "0";
+    document.body.appendChild(tempDiv); // 문서에 임시 div를 추가
+
+    // html2canvas를 사용하여 HTML을 캔버스로 변환합니다.
+    html2canvas(tempDiv).then((canvas) => {
+      // 캔버스를 이미지 데이터로 변환합니다.
+      const imgData = canvas.toDataURL("image/png");
+
+      // jsPDF 인스턴스를 생성합니다.
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: [canvas.width * 0.264583, canvas.height * 0.264583], // 캔버스 크기를 mm 단위로 변환
+      });
+
+      pdf.addImage(
+        imgData,
+        "PNG",
+        0,
+        0,
+        pdf.internal.pageSize.getWidth(),
+        pdf.internal.pageSize.getHeight()
+      );
+
+      // PDF를 다운로드합니다.
+      pdf.save("download.pdf");
+
+      // 임시 div를 문서에서 제거합니다.
+      document.body.removeChild(tempDiv);
+    });
+  };
+
+  // real
+  const downloadPdfFromServer = async (capacity: string) => {
+    const capacityValue = choosenCapacity === "" ? capacity : choosenCapacity;
+    // const choosenHc = "Vietnam";
+    // const choosenMt = "Solar";
+
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/example/pdf?hc=${choosenHc}&mt=${choosenMt}&capacity=${capacityValue}`;
+    try {
+      // fileresponse로 받음
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = downloadUrl;
+      a.setAttribute("download", `common-carbon-ai-prepdd.pdf`); // 파일명
+      document.body.appendChild(a);
+      a.click();
+      a.parentNode?.removeChild(a);
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error("There was an error!", error);
+    }
+  };
+
+  // useEffect(() => {
+  // downloadPdfFromServer("100000");
+  // }, []);
 
   return (
     <main className="flex flex-col items-center pt-20 px-4 pb-4 font-pretendard min-h-screen max-h-screen overflow-hidden">
@@ -660,7 +839,7 @@ export default function Home() {
                 message.sender === "user"
                   ? "bg-white text-primary font-bold self-end text-right rounded-tr-none border border-gray-300 shadow-lg"
                   : "bg-primary text-black self-start rounded-tl-none bg-opacity-20 shadow-lg"
-              } inline-block max-w-[70%] break-words`}
+              } inline-block max-w-[90%] break-words`}
             >
               {message.sender === "user" && messageState.isTyping && (
                 <div className="flex items-center gap-2 p-2">
@@ -698,8 +877,8 @@ export default function Home() {
                 )
               }
               {
-                // 버튼 메시지
-                message.type === "button" && (
+                // href 메시지
+                message.type === "href" && (
                   <a
                     href={message.desc as string}
                     target="_blank"
@@ -709,7 +888,51 @@ export default function Home() {
                   </a>
                 )
               }
-              {message.text}
+              {
+                // 버튼 메시지
+                message.type === "button" && (
+                  <button
+                    className="text-white font-bold py-2 px-4 rounded-[10px] border border-primary bg-primary hover:bg-white hover:text-primary transition-all duration-300 ease-in-out text-sm"
+                    onClick={() => {
+                      if (message.desc === "downloadPdfButton") {
+                        downloadPdfFromServer(choosenCapacity);
+                      }
+                    }}
+                  >
+                    {message.text}
+                  </button>
+                )
+              }
+              {/* {message.type === "html" && (
+                <div
+                  className="mt-2"
+                  dangerouslySetInnerHTML={{ __html: message.text as string }}
+                  style={{
+                    backgroundColor: "white",
+                    padding: "20px",
+                    borderRadius: "8px",
+                    boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+                  }}
+                />
+              )} */}
+              {message.type === "html" && (
+                <iframe
+                  className="mt-2"
+                  src={message.text as string}
+                  style={{
+                    width: "75vw",
+                    height: "90vw",
+                    backgroundColor: "white",
+                    padding: "20px",
+                    borderRadius: "8px",
+                    boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+                  }}
+                />
+              )}
+              {message.type === undefined && (
+                <div className="text-md">{message.text}</div>
+              )}
+              {/* {message.text} */}
             </div>
           ))}
         </div>
