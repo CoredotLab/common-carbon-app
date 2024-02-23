@@ -175,23 +175,28 @@ export default function Home() {
       const stream = await fetchGreeting();
       const reader = stream.getReader();
       const chunks: string[] = [];
+      if (messages.length === 0) {
+        // console.log("if here?");
+        const emptyMessage: IMessage = {
+          id: Date.now(),
+          text: "",
+          sender: "server",
+        };
+        setMessages((currentMessages) => [...currentMessages, emptyMessage]);
+      }
 
       function read() {
         reader.read().then(({ done, value }) => {
+          // console.log("value>> ", value, typeof value);
           chunks.push(value);
           const text = chunks.join("");
           // console.log("text 222>> ", text);
           // console.log("value>>>>>", value);
           if (done) {
             // console.log("Stream done.", chunks.join(""));
-            const message: IMessage = {
-              id: Date.now() + 1,
-              text: chunks.join(""),
-              sender: "server",
-            };
+
             // time delay
             setTimeout(() => {
-              setMessages((currentMessages) => [...currentMessages, message]);
               const chooseHostCountryOrNotMessage: IMessage = {
                 id: Date.now() + 2,
                 text: "Do you know where you want to host your project?",
@@ -220,31 +225,40 @@ export default function Home() {
 
             return;
           }
-          if (text.includes("\n")) {
-            const parts = text.split("\n");
+
+          if (value.includes("\n")) {
+            // 앞뒤로 자르고 끊어주기
+            const parts = value.split("\n");
             const part_length = parts.length;
-            // console.log("parts.length", part_length);
             for (let i = 0; i < part_length - 1; i++) {
               if (parts[i].trim() === "") {
                 continue;
               }
-              // console.log("parts[i]", parts[i]);
-              if (i === 0) {
-                setMessageState((prev) => ({
-                  ...prev,
-                  isServerThinking: false,
-                }));
-              }
-              setMessages((currentMessages) => [
-                ...currentMessages,
-                { id: Date.now() + i, text: parts[i], sender: "server" },
-              ]);
+              setMessageState((prev) => ({
+                ...prev,
+                isServerThinking: false,
+              }));
+              setMessages((currentMessages) => {
+                const newMessages = [...currentMessages];
+                const lastMessage = currentMessages[currentMessages.length - 1];
+                lastMessage.text += parts[i];
+                return newMessages;
+              });
             }
-            chunks.length = 0;
-            if (parts[part_length - 1].trim() === "") {
-            } else {
-              chunks.push(parts[part_length - 1]);
-            }
+            const newMessage: IMessage = {
+              id: Date.now() + 1,
+              text: parts[part_length - 1],
+              sender: "server",
+            };
+            setMessages((currentMessages) => [...currentMessages, newMessage]);
+          } else {
+            // console.log("enter");
+            setMessages((currentMessages) => {
+              const newMessages = [...currentMessages];
+              const lastMessage = currentMessages[currentMessages.length - 1];
+              lastMessage.text += value;
+              return newMessages;
+            });
           }
 
           read();
@@ -367,18 +381,18 @@ export default function Home() {
     const stream = await fetchSelectMtRecommendHc(mt_name);
     const reader = stream.getReader();
     const chunks: string[] = [];
+    const emptyMessage: IMessage = {
+      id: Date.now(),
+      text: "",
+      sender: "server",
+    };
+    setMessages((currentMessages) => [...currentMessages, emptyMessage]);
 
     function read() {
       reader.read().then(({ done, value }) => {
         chunks.push(value);
         const text = chunks.join("");
         if (done) {
-          const message: IMessage = {
-            id: Date.now() + 1,
-            text: chunks.join(""),
-            sender: "server",
-          };
-          setMessages((currentMessages) => [...currentMessages, message]);
           setTimeout(() => {
             const chooseHostCountry: IMessage = {
               id: Date.now() + 2,
@@ -407,8 +421,10 @@ export default function Home() {
           }, 1000);
           return;
         }
-        if (text.includes("\n")) {
-          const parts = text.split("\n");
+
+        if (value.includes("\n")) {
+          // 앞뒤로 자르고 끊어주기
+          const parts = value.split("\n");
           const part_length = parts.length;
           for (let i = 0; i < part_length - 1; i++) {
             if (parts[i].trim() === "") {
@@ -418,16 +434,27 @@ export default function Home() {
               ...prev,
               isServerThinking: false,
             }));
-            setMessages((currentMessages) => [
-              ...currentMessages,
-              { id: Date.now() + i, text: parts[i], sender: "server" },
-            ]);
+            setMessages((currentMessages) => {
+              const newMessages = [...currentMessages];
+              const lastMessage = currentMessages[currentMessages.length - 1];
+              lastMessage.text += parts[i];
+              return newMessages;
+            });
           }
-          chunks.length = 0;
-          if (parts[part_length - 1].trim() === "") {
-          } else {
-            chunks.push(parts[part_length - 1]);
-          }
+          const newMessage: IMessage = {
+            id: Date.now() + 1,
+            text: parts[part_length - 1],
+            sender: "server",
+          };
+          setMessages((currentMessages) => [...currentMessages, newMessage]);
+        } else {
+          // console.log("enter");
+          setMessages((currentMessages) => {
+            const newMessages = [...currentMessages];
+            const lastMessage = currentMessages[currentMessages.length - 1];
+            lastMessage.text += value;
+            return newMessages;
+          });
         }
 
         read();
@@ -488,25 +515,26 @@ export default function Home() {
     const stream = await fetchSelectHcMtDesc(hc_name, mt_name);
     const reader = stream.getReader();
     const chunks: string[] = [];
+    const emptyMessage: IMessage = {
+      id: Date.now(),
+      text: "",
+      sender: "server",
+    };
+    setMessages((currentMessages) => [...currentMessages, emptyMessage]);
 
     function read() {
       reader.read().then(({ done, value }) => {
         chunks.push(value);
         const text = chunks.join("");
         if (done) {
-          const message: IMessage = {
-            id: Date.now() + 1,
-            text: chunks.join(""),
-            sender: "server",
-          };
-          setMessages((currentMessages) => [...currentMessages, message]);
           setTimeout(() => {
             handleEnterCapacity(hc_name, mt_name);
           }, 1000);
           return;
         }
-        if (text.includes("\n")) {
-          const parts = text.split("\n");
+        if (value.includes("\n")) {
+          // 앞뒤로 자르고 끊어주기
+          const parts = value.split("\n");
           const part_length = parts.length;
           for (let i = 0; i < part_length - 1; i++) {
             if (parts[i].trim() === "") {
@@ -516,16 +544,27 @@ export default function Home() {
               ...prev,
               isServerThinking: false,
             }));
-            setMessages((currentMessages) => [
-              ...currentMessages,
-              { id: Date.now() + i, text: parts[i], sender: "server" },
-            ]);
+            setMessages((currentMessages) => {
+              const newMessages = [...currentMessages];
+              const lastMessage = currentMessages[currentMessages.length - 1];
+              lastMessage.text += parts[i];
+              return newMessages;
+            });
           }
-          chunks.length = 0;
-          if (parts[part_length - 1].trim() === "") {
-          } else {
-            chunks.push(parts[part_length - 1]);
-          }
+          const newMessage: IMessage = {
+            id: Date.now() + 1,
+            text: parts[part_length - 1],
+            sender: "server",
+          };
+          setMessages((currentMessages) => [...currentMessages, newMessage]);
+        } else {
+          // console.log("enter");
+          setMessages((currentMessages) => {
+            const newMessages = [...currentMessages];
+            const lastMessage = currentMessages[currentMessages.length - 1];
+            lastMessage.text += value;
+            return newMessages;
+          });
         }
 
         read();
@@ -563,24 +602,25 @@ export default function Home() {
     const stream = await fetchSelectHcDesc01(hc_name);
     const reader = stream.getReader();
     const chunks: string[] = [];
+    const emptyMessage: IMessage = {
+      id: Date.now(),
+      text: "",
+      sender: "server",
+    };
+    setMessages((currentMessages) => [...currentMessages, emptyMessage]);
 
     function read() {
       reader.read().then(async ({ done, value }) => {
         chunks.push(value);
         const text = chunks.join("");
         if (done) {
-          const message: IMessage = {
-            id: Date.now() + 1,
-            text: chunks.join(""),
-            sender: "server",
-          };
-          setMessages((currentMessages) => [...currentMessages, message]);
           await handleFetchSelectHcDesc02(hc_name);
 
           return;
         }
-        if (text.includes("\n")) {
-          const parts = text.split("\n");
+        if (value.includes("\n")) {
+          // 앞뒤로 자르고 끊어주기
+          const parts = value.split("\n");
           const part_length = parts.length;
           for (let i = 0; i < part_length - 1; i++) {
             if (parts[i].trim() === "") {
@@ -590,16 +630,27 @@ export default function Home() {
               ...prev,
               isServerThinking: false,
             }));
-            setMessages((currentMessages) => [
-              ...currentMessages,
-              { id: Date.now() + i, text: parts[i], sender: "server" },
-            ]);
+            setMessages((currentMessages) => {
+              const newMessages = [...currentMessages];
+              const lastMessage = currentMessages[currentMessages.length - 1];
+              lastMessage.text += parts[i];
+              return newMessages;
+            });
           }
-          chunks.length = 0;
-          if (parts[part_length - 1].trim() === "") {
-          } else {
-            chunks.push(parts[part_length - 1]);
-          }
+          const newMessage: IMessage = {
+            id: Date.now() + 1,
+            text: parts[part_length - 1],
+            sender: "server",
+          };
+          setMessages((currentMessages) => [...currentMessages, newMessage]);
+        } else {
+          // console.log("enter");
+          setMessages((currentMessages) => {
+            const newMessages = [...currentMessages];
+            const lastMessage = currentMessages[currentMessages.length - 1];
+            lastMessage.text += value;
+            return newMessages;
+          });
         }
 
         read();
@@ -637,6 +688,12 @@ export default function Home() {
     const stream = await fetchSelectHcDesc02(hc_name);
     const reader = stream.getReader();
     const chunks: string[] = [];
+    const emptyMessage: IMessage = {
+      id: Date.now(),
+      text: "",
+      sender: "server",
+    };
+    setMessages((currentMessages) => [...currentMessages, emptyMessage]);
 
     setMessageState((prev) => ({
       ...prev,
@@ -648,14 +705,7 @@ export default function Home() {
         chunks.push(value);
         const text = chunks.join("");
         if (done) {
-          const message: IMessage = {
-            id: Date.now() + 1,
-            text: chunks.join(""),
-            sender: "server",
-          };
-          setMessages((currentMessages) => [...currentMessages, message]);
           setTimeout(() => {
-            setMessages((currentMessages) => [...currentMessages, message]);
             const chooseMitigationTechnology: IMessage = {
               id: Date.now() + 2,
               text: "This mitigation technology is available in the following countries. Please select the mitigation technology you are interested in.",
@@ -685,8 +735,9 @@ export default function Home() {
 
           return;
         }
-        if (text.includes("\n")) {
-          const parts = text.split("\n");
+        if (value.includes("\n")) {
+          // 앞뒤로 자르고 끊어주기
+          const parts = value.split("\n");
           const part_length = parts.length;
           for (let i = 0; i < part_length - 1; i++) {
             if (parts[i].trim() === "") {
@@ -696,16 +747,27 @@ export default function Home() {
               ...prev,
               isServerThinking: false,
             }));
-            setMessages((currentMessages) => [
-              ...currentMessages,
-              { id: Date.now() + i, text: parts[i], sender: "server" },
-            ]);
+            setMessages((currentMessages) => {
+              const newMessages = [...currentMessages];
+              const lastMessage = currentMessages[currentMessages.length - 1];
+              lastMessage.text += parts[i];
+              return newMessages;
+            });
           }
-          chunks.length = 0;
-          if (parts[part_length - 1].trim() === "") {
-          } else {
-            chunks.push(parts[part_length - 1]);
-          }
+          const newMessage: IMessage = {
+            id: Date.now() + 1,
+            text: parts[part_length - 1],
+            sender: "server",
+          };
+          setMessages((currentMessages) => [...currentMessages, newMessage]);
+        } else {
+          // console.log("enter");
+          setMessages((currentMessages) => {
+            const newMessages = [...currentMessages];
+            const lastMessage = currentMessages[currentMessages.length - 1];
+            lastMessage.text += value;
+            return newMessages;
+          });
         }
 
         read();
@@ -774,25 +836,26 @@ export default function Home() {
     const stream = await fetchDontKnowAnything();
     const reader = stream.getReader();
     const chunks: string[] = [];
+    const emptyMessage: IMessage = {
+      id: Date.now(),
+      text: "",
+      sender: "server",
+    };
+    setMessages((currentMessages) => [...currentMessages, emptyMessage]);
 
     function read() {
       reader.read().then(({ done, value }) => {
         chunks.push(value);
         const text = chunks.join("");
         if (done) {
-          const message: IMessage = {
-            id: Date.now() + 1,
-            text: chunks.join(""),
-            sender: "server",
-          };
-          setMessages((currentMessages) => [...currentMessages, message]);
           addCimDescToMessages();
           addCimImageToMessages();
           addCimHrefToMessages();
           return;
         }
-        if (text.includes("\n")) {
-          const parts = text.split("\n");
+        if (value.includes("\n")) {
+          // 앞뒤로 자르고 끊어주기
+          const parts = value.split("\n");
           const part_length = parts.length;
           for (let i = 0; i < part_length - 1; i++) {
             if (parts[i].trim() === "") {
@@ -802,16 +865,27 @@ export default function Home() {
               ...prev,
               isServerThinking: false,
             }));
-            setMessages((currentMessages) => [
-              ...currentMessages,
-              { id: Date.now() + i, text: parts[i], sender: "server" },
-            ]);
+            setMessages((currentMessages) => {
+              const newMessages = [...currentMessages];
+              const lastMessage = currentMessages[currentMessages.length - 1];
+              lastMessage.text += parts[i];
+              return newMessages;
+            });
           }
-          chunks.length = 0;
-          if (parts[part_length - 1].trim() === "") {
-          } else {
-            chunks.push(parts[part_length - 1]);
-          }
+          const newMessage: IMessage = {
+            id: Date.now() + 1,
+            text: parts[part_length - 1],
+            sender: "server",
+          };
+          setMessages((currentMessages) => [...currentMessages, newMessage]);
+        } else {
+          // console.log("enter");
+          setMessages((currentMessages) => {
+            const newMessages = [...currentMessages];
+            const lastMessage = currentMessages[currentMessages.length - 1];
+            lastMessage.text += value;
+            return newMessages;
+          });
         }
 
         read();
