@@ -850,6 +850,10 @@ export default function Home() {
         chunks.push(value);
         const text = chunks.join("");
         if (done) {
+          setMessageState((prev) => ({
+            ...prev,
+            isServerThinking: false,
+          }));
           addCimDescToMessages();
           addCimImageToMessages();
           addCimHrefToMessages();
