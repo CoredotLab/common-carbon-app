@@ -63,7 +63,7 @@ export default function Header() {
               CIM
             </Link>
             <Link
-              href="/cal"
+              href="/cal/gemini"
               className={`w-[76px] flex justify-center ${isActive("cal")}`}
             >
               CAL
@@ -127,7 +127,7 @@ export default function Header() {
               CIM
             </Link>
             <Link
-              href="/cal"
+              href="/cal/gemini"
               className={`w-[76px] flex justify-center ${isActive("cal")}`}
             >
               CAL

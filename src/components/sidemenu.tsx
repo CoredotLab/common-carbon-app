@@ -88,7 +88,7 @@ export default function SideMenu() {
               CIM
             </Link>
             <Link
-              href="/cal"
+              href="/cal/gemini"
               className={`w-full h-[60px] flex justify-center items-center ${isActive(
                 "cal"
               )}`}
