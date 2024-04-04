@@ -44,6 +44,7 @@ enum Scenario {
 
 interface ObjectiveAnswer {
   answer: string;
+  answerTranslated: string;
   nextScenario: Scenario;
   hc?: string;
 }
@@ -64,11 +65,48 @@ export default function Home() {
   const [objectiveAnswers, setObjectiveAnswers] = useState<ObjectiveAnswer[]>(
     []
   );
-
   const [choosenHc, setChoosenHc] = useState<string>("");
   const [choosenMt, setChoosenMt] = useState<string>("");
   const [choosenCapacity, setChoosenCapacity] = useState<string>("");
   const [htmlTxt, setHtmlTxt] = useState<string>("");
+
+  const [codeLanguage, setCodeLanguage] = useState<string>("EN");
+  const [nameLanguage, setNameLanguage] = useState<string>("English");
+  const [checkLanguage, setCheckLanguage] = useState<boolean>(false);
+
+  const handleLanguage = async () => {
+    try {
+      const locale = new Intl.Locale(navigator.language).language;
+      // 예외처리
+      if (locale === null || locale === undefined || locale === "") {
+        throw new Error("navigator.language is null or undefined");
+      }
+      console.log("navigator.language", locale);
+      await fetchLanguage(locale);
+    } catch (error) {
+      console.log("error", error);
+    }
+  };
+
+  const fetchLanguage = async (code: string) => {
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/deepl/language?code=${code}`
+      );
+
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+      const data = await response.json();
+      console.log("data", data);
+
+      setCodeLanguage(data.code);
+      setNameLanguage(data.name);
+      setCheckLanguage(true);
+    } catch (error) {
+      console.log("error", error);
+    }
+  };
 
   const sendMessage = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -118,14 +156,18 @@ export default function Home() {
     // 먼저 안내
     const message1: IMessage = {
       id: Date.now(),
-      text: "Congratulations on successfully completing all the questions! Please be patient just a little longer as I am now compiling the results for you.",
+      text: await getTranslatedText(
+        "Congratulations on successfully completing all the questions! Please be patient just a little longer as I am now compiling the results for you."
+      ),
       sender: "server",
     };
     setMessages((currentMessages) => [...currentMessages, message1]);
-    setTimeout(() => {
+    setTimeout(async () => {
       const message2: IMessage = {
         id: Date.now(),
-        text: "PDD Report (Partial): A preliminary overview of your project's design document.",
+        text: await getTranslatedText(
+          "PDD Report (Partial): A preliminary overview of your project's design document."
+        ),
         sender: "server",
       };
       setMessages((currentMessages) => [...currentMessages, message2]);
@@ -140,7 +182,9 @@ export default function Home() {
   };
 
   const fetchGreeting = async () => {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/greeting`);
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/greeting?lang=${nameLanguage}`
+    );
     const reader = response.body?.getReader();
 
     return new ReadableStream({
@@ -164,11 +208,22 @@ export default function Home() {
       },
     });
   };
+  useEffect(() => {
+    const doAsync = async () => {
+      await handleLanguage();
+    };
+    doAsync();
+  }, []);
 
   useEffect(() => {
     if (isRequestGreeting) {
       return;
     }
+
+    if (!checkLanguage) {
+      return;
+    }
+
     setIsRequestGreeting(true);
     const handleFetchGreeting = async () => {
       // console.log("Fetching greeting...");
@@ -196,10 +251,12 @@ export default function Home() {
             // console.log("Stream done.", chunks.join(""));
 
             // time delay
-            setTimeout(() => {
+            setTimeout(async () => {
               const chooseHostCountryOrNotMessage: IMessage = {
                 id: Date.now() + 2,
-                text: "Do you know where you want to host your project?",
+                text: await getTranslatedText(
+                  "Do you know where you want to host your project?"
+                ),
                 sender: "server",
               };
               setMessageState((prev) => ({
@@ -269,7 +326,7 @@ export default function Home() {
     };
 
     handleFetchGreeting();
-  }, []);
+  }, [checkLanguage]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -277,9 +334,37 @@ export default function Home() {
     }
   }, [messages]);
 
+  const getTranslatedText = async (text: string) => {
+    try {
+      const url = `${process.env.NEXT_PUBLIC_API_URL}/deepl/translate`;
+      const body = {
+        text: text,
+        target_code: codeLanguage,
+      };
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.log("error", error);
+      return text;
+    }
+  };
+
   const getGreetingObjectiveAnswers = async () => {
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/greeting/objective`
+      `${process.env.NEXT_PUBLIC_API_URL}/greeting/objective?code=${codeLanguage}`
     );
     const data = await response.json();
     setObjectiveAnswers(data);
@@ -287,12 +372,13 @@ export default function Home() {
 
   const handleSelectObjectiveAnswer = async (
     answer: string,
+    answerTranslated: string,
     nextScenario: Scenario,
     hc?: string
   ) => {
     // 사용자 마지막 답변을 선택한 답변으로 변경 처리
     const lastMessage = messages[messages.length - 1];
-    lastMessage.text = answer;
+    lastMessage.text = answerTranslated;
     setMessages((prev) => [...prev.slice(0, -1), lastMessage]);
     setMessageState((prev) => ({
       ...prev,
@@ -314,7 +400,9 @@ export default function Home() {
       // host country 선택 안한 경우, mitigation technology 만 알고 있는 경우, 다음에 mitigation technology 선택.
       const message: IMessage = {
         id: Date.now(),
-        text: "Please select the mitigation technology you are interested in. Available mitigation technologies are Solar for now.",
+        text: await getTranslatedText(
+          "Please select the mitigation technology you are interested in. Available mitigation technologies are Solar for now."
+        ),
         sender: "server",
       };
       setMessageState((prev) => ({
@@ -355,7 +443,7 @@ export default function Home() {
 
   const fetchSelectMtRecommendHc = async (mt_name: string) => {
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/selectmt/recommendhc?mt=${mt_name}`
+      `${process.env.NEXT_PUBLIC_API_URL}/selectmt/recommendhc?mt=${mt_name}&lang=${nameLanguage}`
     );
     const reader = response.body?.getReader();
 
@@ -393,10 +481,12 @@ export default function Home() {
         chunks.push(value);
         const text = chunks.join("");
         if (done) {
-          setTimeout(() => {
+          setTimeout(async () => {
             const chooseHostCountry: IMessage = {
               id: Date.now() + 2,
-              text: "Please select the host country you are interested in.",
+              text: await getTranslatedText(
+                "Please select the host country you are interested in."
+              ),
               sender: "server",
             };
             setMessageState((prev) => ({
@@ -467,7 +557,9 @@ export default function Home() {
   const handleEnterCapacity = async (hc: string, mt: string) => {
     const message: IMessage = {
       id: Date.now(),
-      text: "Please enter the solar power capacity of the project. Please enter the capacity in MWh/year.",
+      text: await getTranslatedText(
+        "Please enter the solar power capacity of the project. Please enter the capacity in MWh/year."
+      ),
       sender: "server",
     };
     setMessages((currentMessages) => [...currentMessages, message]);
@@ -486,7 +578,7 @@ export default function Home() {
 
   const fetchSelectHcMtDesc = async (hc_name: string, mt_name: string) => {
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/selectmt/desc?hc=${hc_name}&mt=${mt_name}`
+      `${process.env.NEXT_PUBLIC_API_URL}/selectmt/desc?hc=${hc_name}&mt=${mt_name}&lang=${nameLanguage}`
     );
     const reader = response.body?.getReader();
 
@@ -576,7 +668,7 @@ export default function Home() {
 
   const fetchSelectHcDesc01 = async (hc_name: string) => {
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/selecthc/desc01?hc=${hc_name}`
+      `${process.env.NEXT_PUBLIC_API_URL}/selecthc/desc01?hc=${hc_name}&lang=${nameLanguage}`
     );
     const reader = response.body?.getReader();
 
@@ -662,7 +754,7 @@ export default function Home() {
 
   const fetchSelectHcDesc02 = async (hc_name: string) => {
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/selecthc/desc02?hc=${hc_name}`
+      `${process.env.NEXT_PUBLIC_API_URL}/selecthc/desc02?hc=${hc_name}&lang=${nameLanguage}`
     );
     const reader = response.body?.getReader();
 
@@ -705,10 +797,12 @@ export default function Home() {
         chunks.push(value);
         const text = chunks.join("");
         if (done) {
-          setTimeout(() => {
+          setTimeout(async () => {
             const chooseMitigationTechnology: IMessage = {
               id: Date.now() + 2,
-              text: "This mitigation technology is available in the following countries. Please select the mitigation technology you are interested in.",
+              text: await getTranslatedText(
+                "This mitigation technology is available in the following countries. Please select the mitigation technology you are interested in."
+              ),
               sender: "server",
             };
             setMessageState((prev) => ({
@@ -779,7 +873,7 @@ export default function Home() {
 
   const getSelectHcObjectiveAnswers = async (hc: string) => {
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/selecthc/objective?hc=${hc}`
+      `${process.env.NEXT_PUBLIC_API_URL}/selecthc/objective?hc=${hc}&code=${codeLanguage}`
     );
 
     const data = await response.json();
@@ -788,7 +882,7 @@ export default function Home() {
 
   const getSelectMtObjectiveAnswers = async () => {
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/selectmt/objective`
+      `${process.env.NEXT_PUBLIC_API_URL}/selectmt/objective?code=${codeLanguage}`
     );
 
     const data = await response.json();
@@ -797,7 +891,7 @@ export default function Home() {
 
   const getSelectMtRecommendHcObjectiveAnswers = async () => {
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/selectmt/recommendhc/objective`
+      `${process.env.NEXT_PUBLIC_API_URL}/selectmt/recommendhc/objective?code=${codeLanguage}`
     );
 
     const data = await response.json();
@@ -806,7 +900,7 @@ export default function Home() {
 
   const fetchDontKnowAnything = async () => {
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/greeting/dont-know-anything`
+      `${process.env.NEXT_PUBLIC_API_URL}/greeting/dont-know-anything?lang=${nameLanguage}`
     );
     const reader = response.body?.getReader();
 
@@ -848,6 +942,10 @@ export default function Home() {
         chunks.push(value);
         const text = chunks.join("");
         if (done) {
+          setMessageState((prev) => ({
+            ...prev,
+            isServerThinking: false,
+          }));
           addCimDescToMessages();
           addCimImageToMessages();
           addCimHrefToMessages();
@@ -895,10 +993,12 @@ export default function Home() {
     read();
   };
 
-  const addCimDescToMessages = () => {
+  const addCimDescToMessages = async () => {
     const cimDescMessage: IMessage = {
       id: Date.now(),
-      text: "The Carbon Impact Map (CIM) is a global map showcasing the current carbon reduction efforts worldwide, offering a detailed view of each country's carbon reductions by technology.",
+      text: await getTranslatedText(
+        "The Carbon Impact Map (CIM) is a global map showcasing the current carbon reduction efforts worldwide, offering a detailed view of each country's carbon reductions by technology."
+      ),
       sender: "server",
     };
     setMessages((currentMessages) => [...currentMessages, cimDescMessage]);
@@ -929,7 +1029,7 @@ export default function Home() {
     // console.log("choosenCapacity", choosenCapacity, capacity);
     const capacityValue = choosenCapacity === "" ? capacity : choosenCapacity;
     // fetch from server
-    const url = `${process.env.NEXT_PUBLIC_API_URL}/example?hc=${choosenHc}&mt=${choosenMt}&capacity=${capacityValue}`;
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/example?hc=${choosenHc}&mt=${choosenMt}&capacity=${capacityValue}&lang=${nameLanguage}`;
 
     fetch(url)
       .then((response) => response.text())
@@ -1186,12 +1286,13 @@ export default function Home() {
                     onClick={() => {
                       handleSelectObjectiveAnswer(
                         answer.answer,
+                        answer.answerTranslated,
                         answer.nextScenario,
                         answer.hc
                       );
                     }}
                   >
-                    {answer.answer}
+                    {answer.answerTranslated}
                   </button>
                 ))}
               </div>
