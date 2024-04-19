@@ -40,6 +40,11 @@ enum Scenario {
   ENTER_CAPACITY = "ENTER_CAPACITY", // 용량 입력
   RECOMMEND_HC = "RECOMMEND_HC", // 기술만 알아서, 기술 먼저 선택한 경우. 이후에 hc 추천해줌.
   ENTER_CAPACITY_2 = "ENTER_CAPACITY_2", // 용량 입력
+  ENTER_GENERATION = "ENTER_GENERATION", // 발전량 입력
+  ENTER_HOURS = "ENTER_HOURS", // 운영시간 입력
+  ENTER_DAYS = "ENTER_DAYS", // 운영일수 입력
+  ENTER_UTILIZATION_RATE = "ENTER_UTILIZATION_RATE", // 이용률 입력
+  GET_PDD = "GET_PDD", // PDD 보여주기
 }
 
 interface ObjectiveAnswer {
@@ -68,6 +73,11 @@ export default function Home() {
   const [choosenHc, setChoosenHc] = useState<string>("");
   const [choosenMt, setChoosenMt] = useState<string>("");
   const [choosenCapacity, setChoosenCapacity] = useState<string>("");
+  const [generation, setGeneration] = useState<string>(""); // MW
+  const [operatingHours, setOperatingHours] = useState<string>("24"); // hour / day
+  const [operatingDays, setOperatingDays] = useState<string>("365"); // days/year
+  const [utilizationRate, setUtilizationRate] = useState<string>("15"); // %
+
   const [htmlTxt, setHtmlTxt] = useState<string>("");
 
   const [codeLanguage, setCodeLanguage] = useState<string>("EN");
@@ -81,7 +91,7 @@ export default function Home() {
       if (locale === null || locale === undefined || locale === "") {
         throw new Error("navigator.language is null or undefined");
       }
-      console.log("navigator.language", locale);
+
       await fetchLanguage(locale);
     } catch (error) {
       console.log("error", error);
@@ -98,7 +108,6 @@ export default function Home() {
         throw new Error("Network response was not ok");
       }
       const data = await response.json();
-      console.log("data", data);
 
       setCodeLanguage(data.code);
       setNameLanguage(data.name);
@@ -114,14 +123,263 @@ export default function Home() {
       return;
     }
     // only digit
-    if (messageState.currentScenario === Scenario.ENTER_CAPACITY) {
+    if (messageState.currentScenario === Scenario.ENTER_GENERATION) {
       if (!/^\d+$/.test(inputValue)) {
         alert("Please enter only numbers.");
         return;
       }
     }
+
     // console.log("inputValue", inputValue);
-    setChoosenCapacity((prev) => inputValue);
+    // setChoosenCapacity((prev) => inputValue);
+    if (messageState.currentScenario === Scenario.ENTER_GENERATION) {
+      setGeneration(inputValue);
+      const capacity =
+        (Number(inputValue) *
+          Number(operatingHours) *
+          Number(operatingDays) *
+          Number(utilizationRate)) /
+        100;
+      setChoosenCapacity(capacity.toString());
+      const lastMessage = messages[messages.length - 1];
+      lastMessage.text = inputValue + " MW";
+      setMessages((prev) => [...prev.slice(0, -1), lastMessage]);
+      setMessageState((prev) => ({
+        ...prev,
+        teller: "user",
+        questionType: "objective",
+        isTyping: true,
+      }));
+      setInputValue("");
+      const message: IMessage = {
+        id: Date.now(),
+        text: await getTranslatedText(
+          "Calcuated capacity is " +
+            capacity +
+            " MWh/year. This capacity calculated by the formula: generation * operating hours * operating days * utilization rate. And each value is " +
+            inputValue +
+            " MW, " +
+            operatingHours +
+            " hours/day, " +
+            operatingDays +
+            " days/year, " +
+            utilizationRate +
+            "%." +
+            "Edit the value if you want to change the capacity. Or click the button to get the PDD report."
+        ),
+        sender: "server",
+      };
+      setMessages((currentMessages) => [...currentMessages, message]);
+      setMessages((currentMessages) => [
+        ...currentMessages,
+        { id: Date.now() + 3, text: "", sender: "user" },
+      ]);
+
+      await getCalculateEnterGenerationAnswers();
+
+      return;
+    }
+
+    if (messageState.currentScenario === Scenario.ENTER_HOURS) {
+      if (!/^\d+$/.test(inputValue)) {
+        alert("Please enter only numbers.");
+        return;
+      }
+
+      if (
+        Number(inputValue) > 24 ||
+        Number(inputValue) <= 0 ||
+        inputValue === ""
+      ) {
+        alert("Please enter a number between 0 and 24.");
+        return;
+      }
+
+      // 소수점 없음 not float
+      if (inputValue.includes(".")) {
+        alert("Please enter only digits. No decimal point.");
+        return;
+      }
+
+      setOperatingHours(inputValue);
+      const capacity =
+        (Number(generation) *
+          Number(inputValue) *
+          Number(operatingDays) *
+          Number(utilizationRate)) /
+        100;
+      setChoosenCapacity(capacity.toString());
+      const lastMessage = messages[messages.length - 1];
+      lastMessage.text = inputValue + " hours/day";
+      setMessages((prev) => [...prev.slice(0, -1), lastMessage]);
+      setMessageState((prev) => ({
+        ...prev,
+        teller: "user",
+        questionType: "objective",
+        isTyping: true,
+      }));
+      setInputValue("");
+      const message: IMessage = {
+        id: Date.now(),
+        text: await getTranslatedText(
+          "Calcuated capacity is " +
+            capacity +
+            " MWh/year. This capacity calculated by the formula: generation * operating hours * operating days * utilization rate. And each value is " +
+            generation +
+            " MW, " +
+            inputValue +
+            " hours/day, " +
+            operatingDays +
+            " days/year, " +
+            utilizationRate +
+            "%." +
+            "Edit the value if you want to change the capacity. Or click the button to get the PDD report."
+        ),
+        sender: "server",
+      };
+      setMessages((currentMessages) => [...currentMessages, message]);
+      setMessages((currentMessages) => [
+        ...currentMessages,
+        { id: Date.now() + 3, text: "", sender: "user" },
+      ]);
+
+      await getCalculateEnterGenerationAnswers();
+      return;
+    }
+
+    if (messageState.currentScenario === Scenario.ENTER_DAYS) {
+      if (!/^\d+$/.test(inputValue)) {
+        alert("Please enter only numbers.");
+        return;
+      }
+
+      if (
+        Number(inputValue) > 365 ||
+        Number(inputValue) <= 0 ||
+        inputValue === ""
+      ) {
+        alert("Please enter a number between 0 and 365.");
+        return;
+      }
+
+      // 소수점 없음 not float
+      if (inputValue.includes(".")) {
+        alert("Please enter only digits. No decimal point.");
+        return;
+      }
+
+      setOperatingDays(inputValue);
+      const capacity =
+        (Number(generation) *
+          Number(operatingHours) *
+          Number(inputValue) *
+          Number(utilizationRate)) /
+        100;
+      setChoosenCapacity(capacity.toString());
+      const lastMessage = messages[messages.length - 1];
+      lastMessage.text = inputValue + " days/year";
+      setMessages((prev) => [...prev.slice(0, -1), lastMessage]);
+      setMessageState((prev) => ({
+        ...prev,
+        teller: "user",
+        questionType: "objective",
+        isTyping: true,
+      }));
+      setInputValue("");
+      const message: IMessage = {
+        id: Date.now(),
+        text: await getTranslatedText(
+          "Calcuated capacity is " +
+            capacity +
+            " MWh/year. This capacity calculated by the formula: generation * operating hours * operating days * utilization rate. And each value is " +
+            generation +
+            " MW, " +
+            operatingHours +
+            " hours/day, " +
+            inputValue +
+            " days/year, " +
+            utilizationRate +
+            "%." +
+            "Edit the value if you want to change the capacity. Or click the button to get the PDD report."
+        ),
+        sender: "server",
+      };
+      setMessages((currentMessages) => [...currentMessages, message]);
+      setMessages((currentMessages) => [
+        ...currentMessages,
+        { id: Date.now() + 3, text: "", sender: "user" },
+      ]);
+
+      await getCalculateEnterGenerationAnswers();
+      return;
+    }
+
+    if (messageState.currentScenario === Scenario.ENTER_UTILIZATION_RATE) {
+      if (!/^\d+$/.test(inputValue)) {
+        alert("Please enter only numbers.");
+        return;
+      }
+
+      if (
+        Number(inputValue) > 100 ||
+        Number(inputValue) <= 0 ||
+        inputValue === ""
+      ) {
+        alert("Please enter a number between 0 and 100.");
+        return;
+      }
+
+      // 소수점 없음 not float
+      if (inputValue.includes(".")) {
+        alert("Please enter only digits. No decimal point.");
+        return;
+      }
+
+      setOperatingHours(inputValue);
+      const capacity =
+        (Number(generation) *
+          Number(operatingHours) *
+          Number(operatingDays) *
+          Number(inputValue)) /
+        100;
+      setChoosenCapacity(capacity.toString());
+      const lastMessage = messages[messages.length - 1];
+      lastMessage.text = inputValue + "%";
+      setMessages((prev) => [...prev.slice(0, -1), lastMessage]);
+      setMessageState((prev) => ({
+        ...prev,
+        teller: "user",
+        questionType: "objective",
+        isTyping: true,
+      }));
+      setInputValue("");
+      const message: IMessage = {
+        id: Date.now(),
+        text: await getTranslatedText(
+          "Calcuated capacity is " +
+            capacity +
+            " MWh/year. This capacity calculated by the formula: generation * operating hours * operating days * utilization rate. And each value is " +
+            generation +
+            " MW, " +
+            operatingHours +
+            " hours/day, " +
+            operatingDays +
+            " days/year, " +
+            inputValue +
+            "%." +
+            "Edit the value if you want to change the capacity. Or click the button to get the PDD report."
+        ),
+        sender: "server",
+      };
+      setMessages((currentMessages) => [...currentMessages, message]);
+      setMessages((currentMessages) => [
+        ...currentMessages,
+        { id: Date.now() + 3, text: "", sender: "user" },
+      ]);
+
+      await getCalculateEnterGenerationAnswers();
+      return;
+    }
 
     const lastMessage = messages[messages.length - 1];
     lastMessage.text = inputValue + " MWh/year";
@@ -370,6 +628,14 @@ export default function Home() {
     setObjectiveAnswers(data);
   };
 
+  const getCalculateEnterGenerationAnswers = async () => {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/calculate/entergeneration?code=${codeLanguage}`
+    );
+    const data = await response.json();
+    setObjectiveAnswers(data);
+  };
+
   const handleSelectObjectiveAnswer = async (
     answer: string,
     answerTranslated: string,
@@ -439,6 +705,92 @@ export default function Home() {
       setChoosenHc(answer);
       handleFetchSelectHcMtDesc(answer, choosenMt === "" ? "Solar" : choosenMt);
     }
+
+    if (nextScenario === Scenario.ENTER_HOURS) {
+      const message: IMessage = {
+        id: Date.now(),
+        text: await getTranslatedText(
+          "Please enter the number of hours the facility operates per day. (0-24)"
+        ),
+        sender: "server",
+      };
+      setMessages((currentMessages) => [...currentMessages, message]);
+      setMessageState((prev) => ({
+        ...prev,
+        teller: "user",
+        isTyping: true,
+        questionType: "subjective",
+        currentScenario: Scenario.ENTER_HOURS,
+      }));
+      setMessages((currentMessages) => [
+        ...currentMessages,
+        { id: Date.now() + 3, text: "", sender: "user" },
+      ]);
+    }
+
+    if (nextScenario === Scenario.ENTER_DAYS) {
+      const message: IMessage = {
+        id: Date.now(),
+        text: await getTranslatedText(
+          "Please enter the number of days the facility operates per year. (0-365)"
+        ),
+        sender: "server",
+      };
+      setMessages((currentMessages) => [...currentMessages, message]);
+      setMessageState((prev) => ({
+        ...prev,
+        teller: "user",
+        isTyping: true,
+        questionType: "subjective",
+        currentScenario: Scenario.ENTER_DAYS,
+      }));
+      setMessages((currentMessages) => [
+        ...currentMessages,
+        { id: Date.now() + 3, text: "", sender: "user" },
+      ]);
+    }
+
+    if (nextScenario === Scenario.ENTER_UTILIZATION_RATE) {
+      const message: IMessage = {
+        id: Date.now(),
+        text: await getTranslatedText(
+          "Please enter the number of utilization rate of the facility in percentage. (0-100)"
+        ),
+        sender: "server",
+      };
+      setMessages((currentMessages) => [...currentMessages, message]);
+      setMessageState((prev) => ({
+        ...prev,
+        teller: "user",
+        isTyping: true,
+        questionType: "subjective",
+        currentScenario: Scenario.ENTER_UTILIZATION_RATE,
+      }));
+      setMessages((currentMessages) => [
+        ...currentMessages,
+        { id: Date.now() + 3, text: "", sender: "user" },
+      ]);
+    }
+
+    if (nextScenario === Scenario.GET_PDD) {
+      // 총 몇 MWh/year 인지 알려주는 Message 전송
+      const message: IMessage = {
+        id: Date.now(),
+        text: await getTranslatedText(
+          "The total capacity of the facility is " +
+            choosenCapacity +
+            " MWh/year." +
+            "Let's see the PDD report."
+        ),
+        sender: "server",
+      };
+      setMessages((currentMessages) => [...currentMessages, message]);
+
+      // PDD 보여주기
+      handleAllInputed(choosenHc, choosenMt, choosenCapacity);
+    }
+
+    setObjectiveAnswers([]);
   };
 
   const fetchSelectMtRecommendHc = async (mt_name: string) => {
@@ -554,11 +906,11 @@ export default function Home() {
     read();
   };
 
-  const handleEnterCapacity = async (hc: string, mt: string) => {
+  const handleEnterGeneration = async (hc: string, mt: string) => {
     const message: IMessage = {
       id: Date.now(),
       text: await getTranslatedText(
-        "Please enter the solar power capacity of the project. Please enter the capacity in MWh/year."
+        "Please enter the capacity of solar power generation facilities in MW"
       ),
       sender: "server",
     };
@@ -568,7 +920,7 @@ export default function Home() {
       teller: "user",
       isTyping: true,
       questionType: "subjective",
-      currentScenario: Scenario.ENTER_CAPACITY,
+      currentScenario: Scenario.ENTER_GENERATION,
     }));
     setMessages((currentMessages) => [
       ...currentMessages,
@@ -620,7 +972,7 @@ export default function Home() {
         const text = chunks.join("");
         if (done) {
           setTimeout(() => {
-            handleEnterCapacity(hc_name, mt_name);
+            handleEnterGeneration(hc_name, mt_name);
           }, 1000);
           return;
         }
@@ -1174,7 +1526,8 @@ export default function Home() {
                   : "bg-primary text-black self-start rounded-tl-none bg-opacity-20 shadow-lg"
               } inline-block max-w-[90%] break-words`}
             >
-              {message.sender === "user" &&
+              {message.text !== "Internal Server Error" &&
+                message.sender === "user" &&
                 messageState.isTyping &&
                 index === messages.length - 1 && (
                   <div className="flex items-center gap-2 p-2">
@@ -1321,7 +1674,11 @@ export default function Home() {
             className="text-white font-bold py-2 px-4 rounded"
             disabled={!inputValue}
           >
-            {messageState.currentScenario === Scenario.ENTER_CAPACITY &&
+            {(messageState.currentScenario === Scenario.ENTER_GENERATION ||
+              messageState.currentScenario === Scenario.ENTER_HOURS ||
+              messageState.currentScenario === Scenario.ENTER_DAYS ||
+              messageState.currentScenario ===
+                Scenario.ENTER_UTILIZATION_RATE) &&
             messageState.teller === "user" &&
             messageState.questionType === "subjective" ? (
               <Image

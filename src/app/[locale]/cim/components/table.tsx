@@ -38,20 +38,16 @@ export default function CimTable() {
     if (hcValue !== "All") urlParams.append("hc", hcValue);
     if (mtValue !== "All") urlParams.append("mt", mtValue);
 
-    
-
     const url = `${
       process.env.NEXT_PUBLIC_API_URL
     }/table?${urlParams.toString()}`;
-
-    console.log(url);
 
     const requestTableData = async () => {
       try {
         const response = await axios.get(url);
         if (response.status === 200) {
           const data = response.data as TableResponse;
-          
+
           setTableSubject(data.subject);
 
           // object to array

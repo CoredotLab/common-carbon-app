@@ -81,7 +81,7 @@ export default function Home() {
       if (locale === null || locale === undefined || locale === "") {
         throw new Error("navigator.language is null or undefined");
       }
-      console.log("navigator.language", locale);
+
       await fetchLanguage(locale);
     } catch (error) {
       console.log("error", error);
@@ -98,7 +98,6 @@ export default function Home() {
         throw new Error("Network response was not ok");
       }
       const data = await response.json();
-      console.log("data", data);
 
       setCodeLanguage(data.code);
       setNameLanguage(data.name);
