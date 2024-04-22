@@ -22,6 +22,10 @@ interface GraphData {
   cookstove: number;
   solar: number;
   led: number;
+  wind: number;
+  biomass: number;
+  infra: number;
+  transportation: number;
 }
 
 enum Technology {
@@ -31,6 +35,10 @@ enum Technology {
   Cookstove = "Cookstove",
   Solar = "Solar",
   Led = "LED",
+  Wind = "Wind",
+  Biomass = "Biomass",
+  Infra = "Infra",
+  Transportation = "Transportation",
 }
 
 interface GraphResponse {
@@ -50,9 +58,9 @@ export default function CimGraph() {
 
   const requestGraphData = async () => {
     const urlParams = new URLSearchParams();
-    if (acValue !== "All") urlParams.append("ac", acValue);
-    if (hcValue !== "All") urlParams.append("hc", hcValue);
-    if (mtValue !== "All") urlParams.append("mt", mtValue);
+    if (!acValue.includes("All")) urlParams.append("ac", acValue);
+    if (!hcValue.includes("All")) urlParams.append("hc", hcValue);
+    if (!mtValue.includes("All")) urlParams.append("mt", mtValue);
 
     const url = `${
       process.env.NEXT_PUBLIC_API_URL
@@ -81,7 +89,7 @@ export default function CimGraph() {
       </div>
       <div className="flex w-full h-full space-x-[10px]">
         {/* graph */}
-        <div className="w-full h-full">
+        <div className="w-full h-full max-h-[170px]">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart
               width={800}
@@ -167,11 +175,47 @@ export default function CimGraph() {
                   fill="#FF9352"
                 />
               )}
+              {usedTechnology.includes(Technology.Wind) && (
+                <Area
+                  type="monotone"
+                  dataKey="wind"
+                  stackId="1"
+                  stroke="#fb3a73"
+                  fill="#fb3a73"
+                />
+              )}
+              {usedTechnology.includes(Technology.Biomass) && (
+                <Area
+                  type="monotone"
+                  dataKey="biomass"
+                  stackId="1"
+                  stroke="#247a47"
+                  fill="#247a47"
+                />
+              )}
+              {usedTechnology.includes(Technology.Infra) && (
+                <Area
+                  type="monotone"
+                  dataKey="infra"
+                  stackId="1"
+                  stroke="#c80419"
+                  fill="#c80419"
+                />
+              )}
+              {usedTechnology.includes(Technology.Transportation) && (
+                <Area
+                  type="monotone"
+                  dataKey="transportation"
+                  stackId="1"
+                  stroke="#46a2cb"
+                  fill="#46a2cb"
+                />
+              )}
             </AreaChart>
           </ResponsiveContainer>
         </div>
         {/* 색인 */}
-        <div className="w-[105px] flex flex-col h-full space-y-[0px] justify-start shrink-0">
+        <div className="w-[105px] flex flex-col h-full -space-y-[0px] justify-start shrink-0 leading-[12px]">
           {usedTechnology.includes(Technology.Hydro) && (
             <div className="flex space-x-[6px] px-[6px] items-center">
               <div className="w-[8px] h-[8px] bg-[#8884d8] rounded-[100px] shrink-0"></div>
@@ -208,6 +252,30 @@ export default function CimGraph() {
             <div className="flex space-x-[6px] px-[6px] items-center">
               <div className="w-[8px] h-[8px] bg-[#FF9352] rounded-[100px] shrink-0"></div>
               <span className="text-[12px] font-[500]">LED</span>
+            </div>
+          )}
+          {usedTechnology.includes(Technology.Wind) && (
+            <div className="flex space-x-[6px] px-[6px] items-center">
+              <div className="w-[8px] h-[8px] bg-[#fb3a73] rounded-[100px] shrink-0"></div>
+              <span className="text-[12px] font-[500]">wind</span>
+            </div>
+          )}
+          {usedTechnology.includes(Technology.Biomass) && (
+            <div className="flex space-x-[6px] px-[6px] items-center">
+              <div className="w-[8px] h-[8px] bg-[#247a47] rounded-[100px] shrink-0"></div>
+              <span className="text-[12px] font-[500]">biomass</span>
+            </div>
+          )}
+          {usedTechnology.includes(Technology.Infra) && (
+            <div className="flex space-x-[6px] px-[6px] items-center">
+              <div className="w-[8px] h-[8px] bg-[#c80419] rounded-[100px] shrink-0"></div>
+              <span className="text-[12px] font-[500]">infra</span>
+            </div>
+          )}
+          {usedTechnology.includes(Technology.Transportation) && (
+            <div className="flex space-x-[6px] px-[6px] items-center">
+              <div className="w-[8px] h-[8px] bg-[#46a2cb] rounded-[100px] shrink-0"></div>
+              <span className="text-[12px] font-[500]">transportation</span>
             </div>
           )}
         </div>

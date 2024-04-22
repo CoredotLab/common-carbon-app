@@ -34,9 +34,9 @@ export default function CimTable() {
 
   useEffect(() => {
     const urlParams = new URLSearchParams();
-    if (acValue !== "All") urlParams.append("ac", acValue);
-    if (hcValue !== "All") urlParams.append("hc", hcValue);
-    if (mtValue !== "All") urlParams.append("mt", mtValue);
+    if (!acValue.includes("All")) urlParams.append("ac", acValue);
+    if (!hcValue.includes("All")) urlParams.append("hc", hcValue);
+    if (!mtValue.includes("All")) urlParams.append("mt", mtValue);
 
     const url = `${
       process.env.NEXT_PUBLIC_API_URL

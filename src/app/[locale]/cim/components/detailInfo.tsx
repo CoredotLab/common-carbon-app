@@ -35,7 +35,6 @@ interface TableRowResponse {
   id: number;
   lat: number;
   long: number;
-  
 }
 
 // 표에 필요한 내용 ac, hc, mt, project title, reduction, company, methodology, startdate, enddate
@@ -61,9 +60,9 @@ export default function CimDetailInfo() {
   useEffect(() => {
     if (!isShown) return;
     const urlParams = new URLSearchParams();
-    if (acValue !== "All") urlParams.append("ac", acValue);
-    if (hcValue !== "All") urlParams.append("hc", hcValue);
-    if (mtValue !== "All") urlParams.append("mt", mtValue);
+    if (!acValue.includes("All")) urlParams.append("ac", acValue);
+    if (!hcValue.includes("All")) urlParams.append("hc", hcValue);
+    if (!mtValue.includes("All")) urlParams.append("mt", mtValue);
 
     const url = `${
       process.env.NEXT_PUBLIC_API_URL
@@ -94,9 +93,7 @@ export default function CimDetailInfo() {
           }, 0);
           setTotalReduction(totalReduction);
         }
-      } catch (error) {
-        
-      }
+      } catch (error) {}
     };
     requestTableData();
   }, [acValue, hcValue, mtValue, isShown]);

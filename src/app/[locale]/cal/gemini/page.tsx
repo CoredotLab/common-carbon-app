@@ -1526,8 +1526,7 @@ export default function Home() {
                   : "bg-primary text-black self-start rounded-tl-none bg-opacity-20 shadow-lg"
               } inline-block max-w-[90%] break-words`}
             >
-              {message.text !== "Internal Server Error" &&
-                message.sender === "user" &&
+              {message.sender === "user" &&
                 messageState.isTyping &&
                 index === messages.length - 1 && (
                   <div className="flex items-center gap-2 p-2">
@@ -1618,15 +1617,16 @@ export default function Home() {
                   }}
                 />
               )}
-              {message.type === undefined && (
-                <div className="text-md">{message.text}</div>
-              )}
+              {message.text !== "Internal Server Error" &&
+                message.type === undefined && (
+                  <div className="text-md">{message.text}</div>
+                )}
               {/* {message.text} */}
             </div>
           ))}
         </div>
       </div>
-      {
+      {/* {
         // 객관식 답변
         messageState.questionType === "objective" &&
           messageState.teller === "user" && (
@@ -1651,7 +1651,34 @@ export default function Home() {
               </div>
             </div>
           )
+      } */}
+      {
+        // 객관식 답변
+        messageState.questionType === "objective" &&
+          messageState.teller === "user" && (
+            <div className="w-full bg-white max-w-[770px] mt-4 px-4 py-2">
+              <div className="flex flex-wrap justify-center gap-2">
+                {objectiveAnswers.map((answer) => (
+                  <button
+                    key={answer.answer}
+                    className="text-primary font-bold py-2 px-4 rounded-full border border-primary hover:bg-primary hover:text-white transition-all duration-300 ease-in-out text-sm whitespace-nowrap"
+                    onClick={() => {
+                      handleSelectObjectiveAnswer(
+                        answer.answer,
+                        answer.answerTranslated,
+                        answer.nextScenario,
+                        answer.hc
+                      );
+                    }}
+                  >
+                    {answer.answerTranslated}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )
       }
+
       <div
         className={`p-1 w-full bg-white max-w-[770px] rounded-lg border mt-4 ${
           messageState.currentScenario === Scenario.ENTER_CAPACITY &&

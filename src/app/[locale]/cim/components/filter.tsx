@@ -53,7 +53,8 @@ function AcquiringCountry() {
       if (response.status === 200) {
         const countries = response.data;
         // add "All" to the beginning of the array
-        countries.unshift({ ac_id: 0, ac_name: "All" });
+        const length = countries.length;
+        countries.unshift({ ac_id: 0, ac_name: `All (${length})` }); // `All (${length})
         setCountries(countries);
       }
     } catch (error) {}
@@ -80,7 +81,7 @@ function AcquiringCountry() {
           />
         </button>
         {openFilterValue[0] && (
-          <div className="absolute border border-[1px] border-[#B4B1B1] bg-[#F5F5F5] flex flex-col w-[213px] mt-1 rounded-[8px] z-40">
+          <div className="absolute border border-[1px] border-[#B4B1B1] bg-[#F5F5F5] flex flex-col w-[213px] mt-1 rounded-[8px] z-40 overflow-y-auto max-h-[200px]">
             {countries.map((country, index) => (
               <div
                 key={index}
@@ -129,7 +130,8 @@ function HostCountry() {
       if (response.status === 200) {
         const countries = response.data;
         // add "All" to the beginning of the array
-        countries.unshift({ hc_id: 0, hc_name: "All" });
+        const length = countries.length;
+        countries.unshift({ hc_id: 0, hc_name: `All (${length})` }); // `All (${length})
         setCountries(countries);
       }
     } catch (error) {}
@@ -156,7 +158,7 @@ function HostCountry() {
           />
         </button>
         {openFilterValue[1] && (
-          <div className="absolute border border-[1px] border-[#B4B1B1] bg-[#F5F5F5] flex flex-col w-[213px] mt-1 rounded-[8px] z-30">
+          <div className="absolute border border-[1px] border-[#B4B1B1] bg-[#F5F5F5] flex flex-col w-[213px] mt-1 rounded-[8px] z-30 overflow-y-auto max-h-[200px]">
             {countries.map((country, index) => (
               <div
                 key={index}
@@ -205,7 +207,8 @@ function MitigationTechnology() {
       if (response.status === 200) {
         const countries = response.data;
         // add "All" to the beginning of the array
-        countries.unshift({ mt_id: 0, mt_name: "All" });
+        const length = countries.length;
+        countries.unshift({ mt_id: 0, mt_name: `All (${length})` }); // `All (${length})
         setCountries(countries);
       }
     } catch (error) {}
@@ -232,7 +235,7 @@ function MitigationTechnology() {
           />
         </button>
         {openFilterValue[2] && (
-          <div className="absolute border border-[1px] border-[#B4B1B1] bg-[#F5F5F5] flex flex-col w-[213px] mt-1 rounded-[8px] z-20">
+          <div className="absolute border border-[1px] border-[#B4B1B1] bg-[#F5F5F5] flex flex-col w-[213px] mt-1 rounded-[8px] z-20 overflow-y-auto max-h-[200px]">
             {countries.map((country, index) => (
               <div
                 key={index}
