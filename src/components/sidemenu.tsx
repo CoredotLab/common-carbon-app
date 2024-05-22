@@ -75,6 +75,7 @@ export default function SideMenu() {
               className={`w-full h-[60px] flex justify-center items-center ${isActive(
                 "carbonai"
               )}`}
+              onClick={() => setMenuState(false)}
             >
               CarbonAI
             </Link>
@@ -92,6 +93,7 @@ export default function SideMenu() {
               className={`w-full h-[60px] flex justify-center items-center ${isActive(
                 "cal"
               )}`}
+              onClick={() => setMenuState(false)}
             >
               CAL
             </Link>
