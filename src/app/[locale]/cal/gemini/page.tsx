@@ -1695,6 +1695,17 @@ export default function Home() {
             className="flex-1 p-2 rounded outline-none"
             value={inputValue}
             onChange={handleInputChange}
+            disabled={
+              !(
+                (messageState.currentScenario === Scenario.ENTER_GENERATION ||
+                  messageState.currentScenario === Scenario.ENTER_HOURS ||
+                  messageState.currentScenario === Scenario.ENTER_DAYS ||
+                  messageState.currentScenario ===
+                    Scenario.ENTER_UTILIZATION_RATE) &&
+                messageState.teller === "user" &&
+                messageState.questionType === "subjective"
+              )
+            }
           />
           <button
             type="submit"
