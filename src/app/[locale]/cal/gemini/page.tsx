@@ -1,20 +1,8 @@
 "use client";
-import { randomInt } from "crypto";
 import Image from "next/image";
-import {
-  useState,
-  FormEvent,
-  ChangeEvent,
-  useEffect,
-  useRef,
-  use,
-} from "react";
+import { useState, FormEvent, ChangeEvent, useEffect, useRef } from "react";
 import { InfinitySpin } from "react-loader-spinner";
 import shortid from "shortid";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
-import { t } from "i18next";
-import { get } from "http";
 
 interface IMessage {
   id: number;
@@ -45,6 +33,13 @@ enum Scenario {
   ENTER_DAYS = "ENTER_DAYS", // 운영일수 입력
   ENTER_UTILIZATION_RATE = "ENTER_UTILIZATION_RATE", // 이용률 입력
   GET_PDD = "GET_PDD", // PDD 보여주기
+  ENTER_PER_DAY_BRICK = "ENTER_PER_DAY_BRICK", // 하루 생산 벽돌 입력
+  ENTER_BASELINE_WORKDAYS = "ENTER_BASELINE_WORKDAYS", // 기준일수 입력
+  ENTER_BASELINE_ELECTRICITY = "ENTER_BASELINE_ELECTRICITY", // 기준 전기 사용량 입력
+  ENTER_BASELINE_DIESEL = "ENTER_BASELINE_DIESEL", // 기준 디젤 사용량 입력
+  ENTER_PROJECT_WORKDAYS = "ENTER_PROJECT_WORKDAYS", // 프로젝트 일수 입력
+  ENTER_PROJECT_ELECTRICITY = "ENTER_PROJECT_ELECTRICITY", // 프로젝트 전기 사용량 입력
+  GET_PDD_BRICK = "GET_PDD_BRICK", // PDD 보여주기
 }
 
 interface ObjectiveAnswer {
@@ -52,6 +47,16 @@ interface ObjectiveAnswer {
   answerTranslated: string;
   nextScenario: Scenario;
   hc?: string;
+}
+
+interface NonFiredSoilBrickData {
+  bricksPerDay: string;
+  baselineWorkdaysPerYear: string;
+  baselineElectricityConsumption: string;
+  baselineDieselConsumption: string;
+  projectWorkdaysPerYear: string;
+  projectElectricityConsumption: string;
+  totalCarbonEmissionReduction: string;
 }
 
 export default function Home() {
@@ -77,6 +82,17 @@ export default function Home() {
   const [operatingHours, setOperatingHours] = useState<string>("24"); // hour / day
   const [operatingDays, setOperatingDays] = useState<string>("365"); // days/year
   const [utilizationRate, setUtilizationRate] = useState<string>("15"); // %
+
+  const [inputedSoilBrickData, setInputedSoilBrickData] =
+    useState<NonFiredSoilBrickData>({
+      bricksPerDay: "100000",
+      baselineWorkdaysPerYear: "365",
+      baselineElectricityConsumption: "54.7",
+      baselineDieselConsumption: "730",
+      projectWorkdaysPerYear: "260",
+      projectElectricityConsumption: "310.31",
+      totalCarbonEmissionReduction: "872827.13",
+    });
 
   const [htmlTxt, setHtmlTxt] = useState<string>("");
 
@@ -150,7 +166,6 @@ export default function Home() {
         questionType: "objective",
         isTyping: true,
       }));
-      setInputValue("");
       const message: IMessage = {
         id: Date.now(),
         text: await getTranslatedText(
@@ -169,6 +184,7 @@ export default function Home() {
         ),
         sender: "server",
       };
+      setInputValue("");
       setMessages((currentMessages) => [...currentMessages, message]);
       setMessages((currentMessages) => [
         ...currentMessages,
@@ -397,6 +413,311 @@ export default function Home() {
     }, 1000);
   };
 
+  const sendMessageBrick = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (inputValue.trim() === "") {
+      return;
+    }
+
+    // ENTER_PER_DAY_BRICK
+    if (messageState.currentScenario === Scenario.ENTER_PER_DAY_BRICK) {
+      if (!/^\d+$/.test(inputValue)) {
+        alert("Please enter only numbers.");
+        return;
+      }
+
+      const originalBrickData = inputedSoilBrickData;
+      originalBrickData.bricksPerDay = inputValue;
+      originalBrickData.totalCarbonEmissionReduction =
+        calculateAndSetBrickData(originalBrickData);
+      setInputedSoilBrickData(originalBrickData);
+
+      const lastMessage = messages[messages.length - 1];
+      lastMessage.text = inputValue + "  bricks/day";
+      setMessages((prev) => [...prev.slice(0, -1), lastMessage]);
+      setMessageState((prev) => ({
+        ...prev,
+        teller: "user",
+        questionType: "objective",
+        isTyping: true,
+      }));
+      const message: IMessage = {
+        id: Date.now(),
+        text: await getTranslatedText(
+          `Thank you for entering the values. The calculation uses the following baseline figures: daily brick production of ( ${originalBrickData.bricksPerDay} units), annual workdays of (${originalBrickData.baselineWorkdaysPerYear} days), annual electricity consumption of (${originalBrickData.baselineElectricityConsumption} MWh), and annual diesel consumption of (${originalBrickData.baselineDieselConsumption}KL). For the project, the annual workdays are (${originalBrickData.projectWorkdaysPerYear}days) and the annual electricity consumption is (${originalBrickData.projectElectricityConsumption}MWh). The estimated carbon reduction over 20 years is (${originalBrickData.totalCarbonEmissionReduction}tCO2eq). If you would like to change any values, please select them, or choose to proceed with the current calculation.`
+        ),
+        sender: "server",
+      };
+      setInputValue("");
+      setMessages((currentMessages) => [...currentMessages, message]);
+      setMessages((currentMessages) => [
+        ...currentMessages,
+        { id: Date.now() + 3, text: "", sender: "user" },
+      ]);
+
+      await getCalculateEnterGenerationAnswersBrick();
+      return;
+    }
+
+    // ENTER_BASELINE_WORKDAYS
+    if (messageState.currentScenario === Scenario.ENTER_BASELINE_WORKDAYS) {
+      if (!/^\d+$/.test(inputValue)) {
+        alert("Please enter only numbers.");
+        return;
+      }
+
+      const originalBrickData = inputedSoilBrickData;
+      originalBrickData.baselineWorkdaysPerYear = inputValue;
+      originalBrickData.totalCarbonEmissionReduction =
+        calculateAndSetBrickData(originalBrickData);
+      setInputedSoilBrickData(originalBrickData);
+
+      const lastMessage = messages[messages.length - 1];
+      lastMessage.text = inputValue + " days/year";
+      setMessages((prev) => [...prev.slice(0, -1), lastMessage]);
+      setMessageState((prev) => ({
+        ...prev,
+        teller: "user",
+        questionType: "objective",
+        isTyping: true,
+      }));
+      const message: IMessage = {
+        id: Date.now(),
+        text: await getTranslatedText(
+          `Thank you for entering the values. The calculation uses the following baseline figures: daily brick production of ( ${originalBrickData.bricksPerDay} units), annual workdays of (${originalBrickData.baselineWorkdaysPerYear} days), annual electricity consumption of (${originalBrickData.baselineElectricityConsumption} MWh), and annual diesel consumption of (${originalBrickData.baselineDieselConsumption}KL). For the project, the annual workdays are (${originalBrickData.projectWorkdaysPerYear}days) and the annual electricity consumption is (${originalBrickData.projectElectricityConsumption}MWh). The estimated carbon reduction over 20 years is (${originalBrickData.totalCarbonEmissionReduction}tCO2eq). If you would like to change any values, please select them, or choose to proceed with the current calculation.`
+        ),
+        sender: "server",
+      };
+      setInputValue("");
+      setMessages((currentMessages) => [...currentMessages, message]);
+      setMessages((currentMessages) => [
+        ...currentMessages,
+        { id: Date.now() + 3, text: "", sender: "user" },
+      ]);
+
+      await getCalculateEnterGenerationAnswersBrick();
+      return;
+    }
+
+    // ENTER_BASELINE_ELECTRICITY
+    if (messageState.currentScenario === Scenario.ENTER_BASELINE_ELECTRICITY) {
+      if (!/^\d+$/.test(inputValue)) {
+        alert("Please enter only numbers.");
+        return;
+      }
+
+      const originalBrickData = inputedSoilBrickData;
+      originalBrickData.baselineElectricityConsumption = inputValue;
+      originalBrickData.totalCarbonEmissionReduction =
+        calculateAndSetBrickData(originalBrickData);
+      setInputedSoilBrickData(originalBrickData);
+
+      const lastMessage = messages[messages.length - 1];
+      lastMessage.text = inputValue + " MWh";
+      setMessages((prev) => [...prev.slice(0, -1), lastMessage]);
+      setMessageState((prev) => ({
+        ...prev,
+        teller: "user",
+        questionType: "objective",
+        isTyping: true,
+      }));
+      const message: IMessage = {
+        id: Date.now(),
+        text: await getTranslatedText(
+          `Thank you for entering the values. The calculation uses the following baseline figures: daily brick production of ( ${originalBrickData.bricksPerDay} units), annual workdays of (${originalBrickData.baselineWorkdaysPerYear} days), annual electricity consumption of (${originalBrickData.baselineElectricityConsumption} MWh), and annual diesel consumption of (${originalBrickData.baselineDieselConsumption}KL). For the project, the annual workdays are (${originalBrickData.projectWorkdaysPerYear}days) and the annual electricity consumption is (${originalBrickData.projectElectricityConsumption}MWh). The estimated carbon reduction over 20 years is (${originalBrickData.totalCarbonEmissionReduction}tCO2eq). If you would like to change any values, please select them, or choose to proceed with the current calculation.`
+        ),
+        sender: "server",
+      };
+      setInputValue("");
+      setMessages((currentMessages) => [...currentMessages, message]);
+      setMessages((currentMessages) => [
+        ...currentMessages,
+        { id: Date.now() + 3, text: "", sender: "user" },
+      ]);
+
+      await getCalculateEnterGenerationAnswersBrick();
+      return;
+    }
+
+    // ENTER_BASELINE_DIESEL
+    if (messageState.currentScenario === Scenario.ENTER_BASELINE_DIESEL) {
+      if (!/^\d+$/.test(inputValue)) {
+        alert("Please enter only numbers.");
+        return;
+      }
+
+      const originalBrickData = inputedSoilBrickData;
+      originalBrickData.baselineDieselConsumption = inputValue;
+      originalBrickData.totalCarbonEmissionReduction =
+        calculateAndSetBrickData(originalBrickData);
+      setInputedSoilBrickData(originalBrickData);
+
+      const lastMessage = messages[messages.length - 1];
+      lastMessage.text = inputValue + " KL";
+      setMessages((prev) => [...prev.slice(0, -1), lastMessage]);
+      setMessageState((prev) => ({
+        ...prev,
+        teller: "user",
+        questionType: "objective",
+        isTyping: true,
+      }));
+      const message: IMessage = {
+        id: Date.now(),
+        text: await getTranslatedText(
+          `Thank you for entering the values. The calculation uses the following baseline figures: daily brick production of ( ${originalBrickData.bricksPerDay} units), annual workdays of (${originalBrickData.baselineWorkdaysPerYear} days), annual electricity consumption of (${originalBrickData.baselineElectricityConsumption} MWh), and annual diesel consumption of (${originalBrickData.baselineDieselConsumption}KL). For the project, the annual workdays are (${originalBrickData.projectWorkdaysPerYear}days) and the annual electricity consumption is (${originalBrickData.projectElectricityConsumption}MWh). The estimated carbon reduction over 20 years is (${originalBrickData.totalCarbonEmissionReduction}tCO2eq). If you would like to change any values, please select them, or choose to proceed with the current calculation.`
+        ),
+        sender: "server",
+      };
+      setInputValue("");
+      setMessages((currentMessages) => [...currentMessages, message]);
+      setMessages((currentMessages) => [
+        ...currentMessages,
+        { id: Date.now() + 3, text: "", sender: "user" },
+      ]);
+
+      await getCalculateEnterGenerationAnswersBrick();
+      return;
+    }
+
+    // ENTER_PROJECT_WORKDAYS
+    if (messageState.currentScenario === Scenario.ENTER_PROJECT_WORKDAYS) {
+      if (!/^\d+$/.test(inputValue)) {
+        alert("Please enter only numbers.");
+        return;
+      }
+
+      const originalBrickData = inputedSoilBrickData;
+      originalBrickData.projectWorkdaysPerYear = inputValue;
+      originalBrickData.totalCarbonEmissionReduction =
+        calculateAndSetBrickData(originalBrickData);
+      setInputedSoilBrickData(originalBrickData);
+
+      const lastMessage = messages[messages.length - 1];
+      lastMessage.text = inputValue + " days/year";
+      setMessages((prev) => [...prev.slice(0, -1), lastMessage]);
+      setMessageState((prev) => ({
+        ...prev,
+        teller: "user",
+        questionType: "objective",
+        isTyping: true,
+      }));
+      const message: IMessage = {
+        id: Date.now(),
+        text: await getTranslatedText(
+          `Thank you for entering the values. The calculation uses the following baseline figures: daily brick production of ( ${originalBrickData.bricksPerDay} units), annual workdays of (${originalBrickData.baselineWorkdaysPerYear} days), annual electricity consumption of (${originalBrickData.baselineElectricityConsumption} MWh), and annual diesel consumption of (${originalBrickData.baselineDieselConsumption}KL). For the project, the annual workdays are (${originalBrickData.projectWorkdaysPerYear}days) and the annual electricity consumption is (${originalBrickData.projectElectricityConsumption}MWh). The estimated carbon reduction over 20 years is (${originalBrickData.totalCarbonEmissionReduction}tCO2eq). If you would like to change any values, please select them, or choose to proceed with the current calculation.`
+        ),
+        sender: "server",
+      };
+      setInputValue("");
+      setMessages((currentMessages) => [...currentMessages, message]);
+      setMessages((currentMessages) => [
+        ...currentMessages,
+        { id: Date.now() + 3, text: "", sender: "user" },
+      ]);
+
+      await getCalculateEnterGenerationAnswersBrick();
+      return;
+    }
+
+    // ENTER_PROJECT_ELECTRICITY
+    if (messageState.currentScenario === Scenario.ENTER_PROJECT_ELECTRICITY) {
+      if (!/^\d+$/.test(inputValue)) {
+        alert("Please enter only numbers.");
+        return;
+      }
+
+      const originalBrickData = inputedSoilBrickData;
+      originalBrickData.projectElectricityConsumption = inputValue;
+      originalBrickData.totalCarbonEmissionReduction =
+        calculateAndSetBrickData(originalBrickData);
+      setInputedSoilBrickData(originalBrickData);
+
+      const lastMessage = messages[messages.length - 1];
+      lastMessage.text = inputValue + " MWh";
+      setMessages((prev) => [...prev.slice(0, -1), lastMessage]);
+      setMessageState((prev) => ({
+        ...prev,
+        teller: "user",
+        questionType: "objective",
+        isTyping: true,
+      }));
+      const message: IMessage = {
+        id: Date.now(),
+        text: await getTranslatedText(
+          `Thank you for entering the values. The calculation uses the following baseline figures: daily brick production of ( ${originalBrickData.bricksPerDay} units), annual workdays of (${originalBrickData.baselineWorkdaysPerYear} days), annual electricity consumption of (${originalBrickData.baselineElectricityConsumption} MWh), and annual diesel consumption of (${originalBrickData.baselineDieselConsumption}KL). For the project, the annual workdays are (${originalBrickData.projectWorkdaysPerYear}days) and the annual electricity consumption is (${originalBrickData.projectElectricityConsumption}MWh). The estimated carbon reduction over 20 years is (${originalBrickData.totalCarbonEmissionReduction}tCO2eq). If you would like to change any values, please select them, or choose to proceed with the current calculation.`
+        ),
+        sender: "server",
+      };
+      setInputValue("");
+      setMessages((currentMessages) => [...currentMessages, message]);
+      setMessages((currentMessages) => [
+        ...currentMessages,
+        { id: Date.now() + 3, text: "", sender: "user" },
+      ]);
+
+      await getCalculateEnterGenerationAnswersBrick();
+      return;
+    }
+
+    // GET_PDD_BRICK
+    const lastMessage = messages[messages.length - 1];
+    lastMessage.text = inputValue + " bricks/day";
+    // 새롭게 method 만들어서 넘겨줘야함. 위 모든 변수들
+    // TODO
+    setMessages((prev) => [...prev.slice(0, -1), lastMessage]);
+    setMessageState((prev) => ({
+      ...prev,
+      teller: "server",
+      isTyping: false,
+    }));
+    setInputValue("");
+    setTimeout(() => {
+      // TODO need new method
+      // handleAllInputed(choosenHc, choosenMt, inputValue);
+      handleAllInputedBrick(
+        choosenHc,
+        inputedSoilBrickData.bricksPerDay,
+        inputedSoilBrickData.baselineWorkdaysPerYear,
+        inputedSoilBrickData.baselineElectricityConsumption,
+        inputedSoilBrickData.baselineDieselConsumption,
+        inputedSoilBrickData.projectWorkdaysPerYear,
+        inputedSoilBrickData.projectElectricityConsumption,
+        inputedSoilBrickData.totalCarbonEmissionReduction
+      );
+    }, 1000);
+  };
+
+  const calculateAndSetBrickData = (brickData: NonFiredSoilBrickData) => {
+    const baselineEmission =
+      (Number(brickData.bricksPerDay) *
+        Number(brickData.baselineWorkdaysPerYear) *
+        2.2 *
+        0.00000618 *
+        25.8 *
+        3.66 +
+        Number(brickData.baselineElectricityConsumption) * 0.722 +
+        1971) *
+      20;
+
+    const projectEmission =
+      (Number(brickData.bricksPerDay) *
+        Number(brickData.projectWorkdaysPerYear) *
+        2.2 *
+        0.00000618 *
+        25.8 *
+        3.66 +
+        Number(brickData.projectElectricityConsumption) * 0.722 +
+        0) *
+      20;
+
+    const leakage = 88.6;
+
+    const totalCarbonEmissionReduction =
+      baselineEmission - projectEmission - leakage;
+
+    return String(totalCarbonEmissionReduction);
+  };
+
   const handleAllInputed = async (hc: string, mt: string, capacity: string) => {
     // pdd 일부 보여주기
     handleShowPdd(capacity);
@@ -408,6 +729,109 @@ export default function Home() {
       addCimImageToMessages();
       addCimHrefToMessages();
     }, 5000);
+  };
+
+  const handleAllInputedBrick = async (
+    hc: string,
+    perDayBrick: string,
+    baselineWorkdays: string,
+    baselineElectricity: string,
+    baselineDiesel: string,
+    projectWorkdays: string,
+    projectElectricity: string,
+    totalCarbonEmissionReduction: string
+  ) => {
+    // pdd 일부 보여주기
+    handleShowPddBrick(
+      hc,
+      perDayBrick,
+      baselineWorkdays,
+      baselineElectricity,
+      baselineDiesel,
+      projectWorkdays,
+      projectElectricity,
+      totalCarbonEmissionReduction
+    );
+    // 조언
+
+    // cim 링크
+    setTimeout(() => {
+      addCimDescToMessages();
+      addCimImageToMessages();
+      addCimHrefToMessages();
+    }, 5000);
+  };
+
+  const handleShowPddBrick = async (
+    hc: string,
+    perDayBrick: string,
+    baselineWorkdays: string,
+    baselineElectricity: string,
+    baselineDiesel: string,
+    projectWorkdays: string,
+    projectElectricity: string,
+    totalCarbonEmissionReduction: string
+  ) => {
+    // 먼저 안내
+    const message1: IMessage = {
+      id: Date.now(),
+      text: await getTranslatedText(
+        "Congratulations on successfully completing all the questions! Please be patient just a little longer as I am now compiling the results for you."
+      ),
+      sender: "server",
+    };
+    setMessages((currentMessages) => [...currentMessages, message1]);
+    setTimeout(async () => {
+      const message2: IMessage = {
+        id: Date.now(),
+        text: await getTranslatedText(
+          "PDD Report (Partial): A preliminary overview of your project's design document."
+        ),
+        sender: "server",
+      };
+      setMessages((currentMessages) => [...currentMessages, message2]);
+    }, 1000);
+    setTimeout(() => {
+      addSampleHtmlTxtToMessagesBrick(
+        hc,
+        perDayBrick,
+        baselineWorkdays,
+        baselineElectricity,
+        baselineDiesel,
+        projectWorkdays,
+        projectElectricity,
+        totalCarbonEmissionReduction
+      );
+    }, 2000);
+  };
+
+  const addSampleHtmlTxtToMessagesBrick = async (
+    hc: string,
+    perDayBrick: string,
+    baselineWorkdays: string,
+    baselineElectricity: string,
+    baselineDiesel: string,
+    projectWorkdays: string,
+    projectElectricity: string,
+    totalCarbonEmissionReduction: string
+  ) => {
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/exampleBrick?hc=${hc}&perDayBrick=${perDayBrick}&baselineWorkdays=${baselineWorkdays}&baselineElectricity=${baselineElectricity}&baselineDiesel=${baselineDiesel}&projectWorkdays=${projectWorkdays}&projectElectricity=${projectElectricity}&totalCarbonEmissionReduction=${totalCarbonEmissionReduction}`;
+    fetch(url)
+      .then((response) => response.text())
+      .then((data) => {
+        const srcDoc = `data:text/html;charset=utf-8,${encodeURIComponent(
+          data
+        )}`;
+        setHtmlTxt(data);
+        const message: IMessage = {
+          id: Date.now(),
+          text: srcDoc,
+          sender: "server",
+          type: "html",
+        };
+        setMessages((currentMessages) => [...currentMessages, message]);
+        addDownloadPdfButtonToMessages();
+      });
   };
 
   const handleShowPdd = async (capacity: string) => {
@@ -636,6 +1060,14 @@ export default function Home() {
     setObjectiveAnswers(data);
   };
 
+  const getCalculateEnterGenerationAnswersBrick = async () => {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/calculate/entergenerationbrick?code=${codeLanguage}`
+    );
+    const data = await response.json();
+    setObjectiveAnswers(data);
+  };
+
   const handleSelectObjectiveAnswer = async (
     answer: string,
     answerTranslated: string,
@@ -667,7 +1099,7 @@ export default function Home() {
       const message: IMessage = {
         id: Date.now(),
         text: await getTranslatedText(
-          "Please select the mitigation technology you are interested in. Available mitigation technologies are Solar for now."
+          `Please select the mitigation technology you are interested in. Available mitigation technologies are ${choosenMt} for now.`
         ),
         sender: "server",
       };
@@ -695,9 +1127,10 @@ export default function Home() {
     }
 
     if (nextScenario === Scenario.ENTER_CAPACITY) {
+      console.log("answer is", answer);
       // 용량 입력
-      handleFetchSelectHcMtDesc(hc as string, answer);
       setChoosenMt(answer);
+      handleFetchSelectHcMtDesc(hc as string, answer);
     }
 
     if (nextScenario === Scenario.ENTER_CAPACITY_2) {
@@ -788,6 +1221,138 @@ export default function Home() {
 
       // PDD 보여주기
       handleAllInputed(choosenHc, choosenMt, choosenCapacity);
+    }
+
+    // brick 관련
+    if (nextScenario === Scenario.ENTER_BASELINE_WORKDAYS) {
+      const message: IMessage = {
+        id: Date.now(),
+        text: await getTranslatedText(
+          "Please enter the number of workdays in the baseline scenario."
+        ),
+        sender: "server",
+      };
+      setMessages((currentMessages) => [...currentMessages, message]);
+      setMessageState((prev) => ({
+        ...prev,
+        teller: "user",
+        isTyping: true,
+        questionType: "subjective",
+        currentScenario: Scenario.ENTER_BASELINE_WORKDAYS,
+      }));
+      setMessages((currentMessages) => [
+        ...currentMessages,
+        { id: Date.now() + 3, text: "", sender: "user" },
+      ]);
+    }
+
+    if (nextScenario === Scenario.ENTER_BASELINE_ELECTRICITY) {
+      const message: IMessage = {
+        id: Date.now(),
+        text: await getTranslatedText(
+          "Please enter the annual electricity consumption in the baseline scenario."
+        ),
+        sender: "server",
+      };
+      setMessages((currentMessages) => [...currentMessages, message]);
+      setMessageState((prev) => ({
+        ...prev,
+        teller: "user",
+        isTyping: true,
+        questionType: "subjective",
+        currentScenario: Scenario.ENTER_BASELINE_ELECTRICITY,
+      }));
+      setMessages((currentMessages) => [
+        ...currentMessages,
+        { id: Date.now() + 3, text: "", sender: "user" },
+      ]);
+    }
+
+    if (nextScenario === Scenario.ENTER_BASELINE_DIESEL) {
+      const message: IMessage = {
+        id: Date.now(),
+        text: await getTranslatedText(
+          "Please enter the annual diesel consumption in the baseline scenario."
+        ),
+        sender: "server",
+      };
+      setMessages((currentMessages) => [...currentMessages, message]);
+      setMessageState((prev) => ({
+        ...prev,
+        teller: "user",
+        isTyping: true,
+        questionType: "subjective",
+        currentScenario: Scenario.ENTER_BASELINE_DIESEL,
+      }));
+      setMessages((currentMessages) => [
+        ...currentMessages,
+        { id: Date.now() + 3, text: "", sender: "user" },
+      ]);
+    }
+
+    if (nextScenario === Scenario.ENTER_PROJECT_WORKDAYS) {
+      const message: IMessage = {
+        id: Date.now(),
+        text: await getTranslatedText(
+          "Please enter the number of workdays in the project scenario."
+        ),
+        sender: "server",
+      };
+      setMessages((currentMessages) => [...currentMessages, message]);
+      setMessageState((prev) => ({
+        ...prev,
+        teller: "user",
+        isTyping: true,
+        questionType: "subjective",
+        currentScenario: Scenario.ENTER_PROJECT_WORKDAYS,
+      }));
+      setMessages((currentMessages) => [
+        ...currentMessages,
+        { id: Date.now() + 3, text: "", sender: "user" },
+      ]);
+    }
+
+    if (nextScenario === Scenario.ENTER_PROJECT_ELECTRICITY) {
+      const message: IMessage = {
+        id: Date.now(),
+        text: await getTranslatedText(
+          "Please enter the annual electricity consumption in the project scenario."
+        ),
+        sender: "server",
+      };
+      setMessages((currentMessages) => [...currentMessages, message]);
+      setMessageState((prev) => ({
+        ...prev,
+        teller: "user",
+        isTyping: true,
+        questionType: "subjective",
+        currentScenario: Scenario.ENTER_PROJECT_ELECTRICITY,
+      }));
+      setMessages((currentMessages) => [
+        ...currentMessages,
+        { id: Date.now() + 3, text: "", sender: "user" },
+      ]);
+    }
+
+    if (nextScenario === Scenario.GET_PDD_BRICK) {
+      const message: IMessage = {
+        id: Date.now(),
+        text: await getTranslatedText("Let's see the PDD report."),
+        sender: "server",
+      };
+      setMessages((currentMessages) => [...currentMessages, message]);
+
+      // PDD 보여주기
+      handleAllInputedBrick(
+        choosenHc,
+        inputedSoilBrickData.bricksPerDay,
+        inputedSoilBrickData.baselineWorkdaysPerYear,
+        inputedSoilBrickData.baselineElectricityConsumption,
+        inputedSoilBrickData.baselineDieselConsumption,
+        inputedSoilBrickData.projectWorkdaysPerYear,
+        inputedSoilBrickData.projectElectricityConsumption,
+        inputedSoilBrickData.totalCarbonEmissionReduction
+      );
     }
 
     setObjectiveAnswers([]);
@@ -907,10 +1472,14 @@ export default function Home() {
   };
 
   const handleEnterGeneration = async (hc: string, mt: string) => {
+    console.log("hc, mt", hc, mt, "choosen", choosenMt);
+    setChoosenMt(mt);
     const message: IMessage = {
       id: Date.now(),
       text: await getTranslatedText(
-        "Please enter the capacity of solar power generation facilities in MW"
+        mt === "Non-Fired Soil Brick"
+          ? "Please enter the daily brick production quantity (number of bricks) for your facility."
+          : `Please enter the capacity of ${mt} power generation facilities in MW`
       ),
       sender: "server",
     };
@@ -920,7 +1489,10 @@ export default function Home() {
       teller: "user",
       isTyping: true,
       questionType: "subjective",
-      currentScenario: Scenario.ENTER_GENERATION,
+      currentScenario:
+        mt === "Non-Fired Soil Brick"
+          ? Scenario.ENTER_PER_DAY_BRICK
+          : Scenario.ENTER_GENERATION,
     }));
     setMessages((currentMessages) => [
       ...currentMessages,
@@ -1412,55 +1984,6 @@ export default function Home() {
     setMessages((currentMessages) => [...currentMessages, downloadPdfButton]);
   };
 
-  // useEffect(() => {
-  //   addSampleHtmlTxtToMessages();
-  // }, []);
-
-  const downloadPdfFromHtml = async (capacity: string) => {
-    const capacityValue = choosenCapacity === "" ? capacity : choosenCapacity;
-    // const url = `${process.env.NEXT_PUBLIC_API_URL}/example?hc=${choosenHc}&mt=${choosenMt}&capacity=${capacityValue}`;
-    const url = `${process.env.NEXT_PUBLIC_API_URL}/example?hc=Vietnam&mt=Solar&capacity=100000`; // sample
-
-    // 서버에서 HTML 콘텐츠를 가져옵니다.
-    const response = await fetch(url);
-    const htmlContent = await response.text();
-
-    // HTML 콘텐츠를 담을 임시 div를 생성합니다.
-    const tempDiv = document.createElement("div");
-    tempDiv.innerHTML = htmlContent;
-    // tempDiv.style.visibility = "hidden";
-    // tempDiv.style.opacity = "0";
-    document.body.appendChild(tempDiv); // 문서에 임시 div를 추가
-
-    // html2canvas를 사용하여 HTML을 캔버스로 변환합니다.
-    html2canvas(tempDiv).then((canvas) => {
-      // 캔버스를 이미지 데이터로 변환합니다.
-      const imgData = canvas.toDataURL("image/png");
-
-      // jsPDF 인스턴스를 생성합니다.
-      const pdf = new jsPDF({
-        orientation: "portrait",
-        unit: "mm",
-        format: [canvas.width * 0.264583, canvas.height * 0.264583], // 캔버스 크기를 mm 단위로 변환
-      });
-
-      pdf.addImage(
-        imgData,
-        "PNG",
-        0,
-        0,
-        pdf.internal.pageSize.getWidth(),
-        pdf.internal.pageSize.getHeight()
-      );
-
-      // PDF를 다운로드합니다.
-      pdf.save("download.pdf");
-
-      // 임시 div를 문서에서 제거합니다.
-      document.body.removeChild(tempDiv);
-    });
-  };
-
   // real
   const downloadPdfFromServer = async (capacity: string) => {
     const capacityValue = choosenCapacity === "" ? capacity : choosenCapacity;
@@ -1468,6 +1991,39 @@ export default function Home() {
     // const choosenMt = "Solar";
 
     const url = `${process.env.NEXT_PUBLIC_API_URL}/example/pdf?hc=${choosenHc}&mt=${choosenMt}&capacity=${capacityValue}`;
+    try {
+      // fileresponse로 받음
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = downloadUrl;
+      a.setAttribute("download", `common-carbon-ai-prepdd.pdf`); // 파일명
+      document.body.appendChild(a);
+      a.click();
+      a.parentNode?.removeChild(a);
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      // console.error("There was an error!", error);
+    }
+  };
+
+  const downloadPdfFromServerBrick = async () => {
+    const inputValues = inputedSoilBrickData;
+    const hc = choosenHc;
+    const perDayBrick = inputValues.bricksPerDay;
+    const baselineWorkdays = inputValues.baselineWorkdaysPerYear;
+    const baselineElectricity = inputValues.baselineElectricityConsumption;
+    const baselineDiesel = inputValues.baselineDieselConsumption;
+    const projectWorkdays = inputValues.projectWorkdaysPerYear;
+    const projectElectricity = inputValues.projectElectricityConsumption;
+    const totalCarbonEmissionReduction =
+      inputValues.totalCarbonEmissionReduction;
+
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/exampleBrick/pdf?hc=${hc}&perDayBrick=${perDayBrick}&baselineWorkdays=${baselineWorkdays}&baselineElectricity=${baselineElectricity}&baselineDiesel=${baselineDiesel}&projectWorkdays=${projectWorkdays}&projectElectricity=${projectElectricity}&totalCarbonEmissionReduction=${totalCarbonEmissionReduction}`;
     try {
       // fileresponse로 받음
       const response = await fetch(url);
@@ -1582,7 +2138,11 @@ export default function Home() {
                     className="text-white font-bold py-2 px-4 rounded-[10px] border border-primary bg-primary hover:bg-white hover:text-primary transition-all duration-300 ease-in-out text-sm"
                     onClick={() => {
                       if (message.desc === "downloadPdfButton") {
-                        downloadPdfFromServer(choosenCapacity);
+                        if (choosenMt === "Non-Fired Soil Brick") {
+                          downloadPdfFromServerBrick();
+                        } else {
+                          downloadPdfFromServer(choosenCapacity);
+                        }
                       }
                     }}
                   >
@@ -1688,7 +2248,14 @@ export default function Home() {
             : "border border-gray-200"
         }`}
       >
-        <form onSubmit={sendMessage} className="flex gap-2">
+        <form
+          onSubmit={
+            choosenMt === "Non-Fired Soil Brick"
+              ? sendMessageBrick
+              : sendMessage
+          }
+          className="flex gap-2"
+        >
           <input
             type="text"
             placeholder="Type your message..."
@@ -1700,6 +2267,18 @@ export default function Home() {
                 (messageState.currentScenario === Scenario.ENTER_GENERATION ||
                   messageState.currentScenario === Scenario.ENTER_HOURS ||
                   messageState.currentScenario === Scenario.ENTER_DAYS ||
+                  messageState.currentScenario ===
+                    Scenario.ENTER_PER_DAY_BRICK ||
+                  messageState.currentScenario ===
+                    Scenario.ENTER_BASELINE_WORKDAYS ||
+                  messageState.currentScenario ===
+                    Scenario.ENTER_BASELINE_ELECTRICITY ||
+                  messageState.currentScenario ===
+                    Scenario.ENTER_BASELINE_DIESEL ||
+                  messageState.currentScenario ===
+                    Scenario.ENTER_PROJECT_WORKDAYS ||
+                  messageState.currentScenario ===
+                    Scenario.ENTER_PROJECT_ELECTRICITY ||
                   messageState.currentScenario ===
                     Scenario.ENTER_UTILIZATION_RATE) &&
                 messageState.teller === "user" &&
@@ -1715,6 +2294,16 @@ export default function Home() {
             {(messageState.currentScenario === Scenario.ENTER_GENERATION ||
               messageState.currentScenario === Scenario.ENTER_HOURS ||
               messageState.currentScenario === Scenario.ENTER_DAYS ||
+              messageState.currentScenario === Scenario.ENTER_PER_DAY_BRICK ||
+              messageState.currentScenario ===
+                Scenario.ENTER_BASELINE_WORKDAYS ||
+              messageState.currentScenario ===
+                Scenario.ENTER_BASELINE_ELECTRICITY ||
+              messageState.currentScenario === Scenario.ENTER_BASELINE_DIESEL ||
+              messageState.currentScenario ===
+                Scenario.ENTER_PROJECT_WORKDAYS ||
+              messageState.currentScenario ===
+                Scenario.ENTER_PROJECT_ELECTRICITY ||
               messageState.currentScenario ===
                 Scenario.ENTER_UTILIZATION_RATE) &&
             messageState.teller === "user" &&
