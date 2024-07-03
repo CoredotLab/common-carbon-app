@@ -14,7 +14,7 @@ export default function SectionMain() {
       <div className="flex w-full h-full z-10 flex-col justify-center text-white max-w-[1440px] mx-auto">
         <div className="flex flex-col space-y-[10px]" data-aos="fade">
           <span className="text-[40px] font-[600]">
-            Harnessing the Power of A.I for Tommorow&apos;s Values
+            Harnessing the Power of A.I for tomorrow&apos;s Values
           </span>
           <span className="text-[20px] font-[500]">
             Pioneering Change, One Byte at a Time. Engineering Solutions, One
