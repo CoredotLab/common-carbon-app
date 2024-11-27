@@ -44,39 +44,36 @@ export default function Header() {
           </div>
 
           <nav className="xl:flex hidden space-x-[40px] flex items-center text-[20px] font-[600] h-[70px] text-white xl:pr-[40px] pr-[20px]">
-            <Link
-              href="/"
-              className={`w-[76px] flex justify-center ${isActive("")}`}
-            >
+            <Link href="/" className={`flex justify-center ${isActive("")}`}>
               HOME
             </Link>
             <Link
               href="/carbonai"
-              className={`w-[76px] flex justify-center ${isActive("carbonai")}`}
+              className={`flex justify-center ${isActive("carbonai")}`}
             >
-              CarbonAI
+              About CarbonAI
             </Link>
             <Link
               href="/cim"
-              className={`w-[76px] flex justify-center ${isActive("cim")}`}
+              className={`flex justify-center ${isActive("cim")}`}
             >
-              CIM
+              Map
             </Link>
             <Link
               href="/cal/gemini"
-              className={`w-[76px] flex justify-center ${isActive("cal")}`}
+              className={`flex justify-center ${isActive("cal")}`}
             >
-              CAL
+              Calculator
             </Link>
             <Link
-              href="/cim"
-              className={`w-[76px] flex justify-center ${isActive("pdd")}`}
+              href=""
+              className={`flex justify-center ${isActive("cac")}`}
               onClick={() => {
                 alert("Service will be available soon!");
                 setMenuState(false);
               }}
             >
-              PDD
+              AutoChecker
             </Link>
           </nav>
           <div className="xl:hidden pr-[20px] flex">
@@ -118,29 +115,29 @@ export default function Header() {
               href="/carbonai"
               className={`w-[76px] flex justify-center ${isActive("carbonai")}`}
             >
-              CarbonAI
+              About CarbonAI
             </Link>
             <Link
               href="/cim"
               className={`w-[76px] flex justify-center ${isActive("cim")}`}
             >
-              CIM
+              Map
             </Link>
             <Link
               href="/cal/gemini"
               className={`w-[76px] flex justify-center ${isActive("cal")}`}
             >
-              CAL
+              Calculator
             </Link>
             <Link
-              href="/cim"
-              className={`w-[76px] flex justify-center ${isActive("pdd")}`}
+              href=""
+              className={`w-[76px] flex justify-center ${isActive("cac")}`}
               onClick={() => {
                 alert("Service will be available soon!");
                 setMenuState(false);
               }}
             >
-              PDD
+              AutoChecker
             </Link>
           </nav>
           <div className="md:hidden pr-[20px]">

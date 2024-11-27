@@ -89,13 +89,14 @@ export default function SectionProjects() {
           </div>
           <div className="flex min-w-[300px] flex flex-col space-y-[21px] xl:p-[0px] p-[20px]">
             <span className="text-[#062425] xl:text-[30px] text-[18px] font-[500]">
-              PDD Generator(PDD)
+              Carbon AutoChecker
             </span>
             <span className="text-black xl:text-[16px] text-[14px] font-[400] max-w-[600px]">
-              The PDD Generator (PDD) is a tool that utilizes generative AI to
-              simplify the creation of lengthy and time-consuming business plans
-              for carbon reduction projects, saving time and effort and enabling
-              a quicker start to carbon mitigation.
+              Carbon AutoChecker: Carbon Autochecker is an AI tool designed to
+              quickly and easily evaluate the completeness of your PDD,
+              providing actionable feedback. By applying a range of
+              international standards, it assesses and enhances the
+              competitiveness of your documentation.
             </span>
             <button
               className="w-[120px] h-[36px] bg-primary text-white p-[10px] flex items-center justify-center text-[14px] font-[600]"

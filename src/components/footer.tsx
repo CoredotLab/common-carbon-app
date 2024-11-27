@@ -32,7 +32,7 @@ export default function Footer() {
           color: isHomeCarbonai ? "#fff" : "#000",
         }}
       >
-        contact : kwangnamryu@ourfuture.kr
+        commoncarbon@ourfuture.kr
       </span>
     </footer>
   );

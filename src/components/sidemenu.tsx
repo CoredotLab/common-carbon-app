@@ -77,7 +77,7 @@ export default function SideMenu() {
               )}`}
               onClick={() => setMenuState(false)}
             >
-              CarbonAI
+              About CarbonAI
             </Link>
             <Link
               href="/cim"
@@ -86,7 +86,7 @@ export default function SideMenu() {
               )}`}
               onClick={() => setMenuState(false)}
             >
-              CIM
+              Map
             </Link>
             <Link
               href="/cal/gemini"
@@ -95,19 +95,19 @@ export default function SideMenu() {
               )}`}
               onClick={() => setMenuState(false)}
             >
-              CAL
+              Calculator
             </Link>
             <Link
               href="/"
               className={`w-full h-[60px] flex justify-center items-center ${isActive(
-                "pdd"
+                "cac"
               )}`}
               onClick={() => {
                 alert("Service will be available soon!");
                 setMenuState(false);
               }}
             >
-              PDD
+              AutoChecker
             </Link>
           </nav>
         </div>
