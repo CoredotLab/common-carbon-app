@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+. "$(dirname "$0")/_/husky.sh"
+
+# yarn build 먼저 수행하고, git add .
+yarn build && git add .
