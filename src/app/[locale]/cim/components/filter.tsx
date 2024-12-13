@@ -11,91 +11,9 @@ import {
   openFilterState,
 } from "@/recoil/filterState";
 
-export default function Filter() {
-  return (
-    <main className="w-full flex md:flex-row flex-col md:space-x-[20px] md:space-y-[0px] space-y-[10px]">
-      <AcquiringCountry />
-      <HostCountry />
-      <MitigationTechnology />
-    </main>
-  );
-}
-
 interface AC {
   ac_id: number;
   ac_name: string;
-}
-
-function AcquiringCountry() {
-  const [countries, setCountries] = useState<AC[]>([]);
-  const acValue = useRecoilValue(acState);
-  const setAcValue = useSetRecoilState(acState);
-  const openFilterValue = useRecoilValue(openFilterState);
-  const setOpenFilterValue = useSetRecoilState(openFilterState);
-
-  const toggleDropdown = () => {
-    if (openFilterValue[0]) {
-      setOpenFilterValue([false, false, false]);
-    } else {
-      setOpenFilterValue([true, false, false]);
-    }
-  };
-
-  const handleSelectCountry = (country: string) => {
-    setAcValue(country);
-    setOpenFilterValue([false, false, false]);
-  };
-
-  const requestAC = async () => {
-    const url = `${process.env.NEXT_PUBLIC_API_URL}/ac`;
-    try {
-      const response = await axios.get(url);
-      if (response.status === 200) {
-        const countries = response.data;
-        // add "All" to the beginning of the array
-        const length = countries.length;
-        countries.unshift({ ac_id: 0, ac_name: `All (${length})` }); // `All (${length})
-        setCountries(countries);
-      }
-    } catch (error) {}
-  };
-
-  useEffect(() => {
-    requestAC();
-  }, []);
-
-  return (
-    <main className="flex flex-col space-y-[7px]">
-      <span className="text-[16px] font-[500]">(1) Acquiring country</span>
-      <div className="relative">
-        <button
-          onClick={toggleDropdown}
-          className="border border-[1px] border-[#B4B1B1] bg-[#F5F5F5] flex w-[213px] h-[30px] py-[10px] px-[20px] items-center justify-between rounded-[8px]"
-        >
-          {acValue}
-          <Image
-            src="/icon_dropdown.svg"
-            alt="arrow-down"
-            width={18}
-            height={18}
-          />
-        </button>
-        {openFilterValue[0] && (
-          <div className="absolute border border-[1px] border-[#B4B1B1] bg-[#F5F5F5] flex flex-col w-[213px] mt-1 rounded-[8px] z-40 overflow-y-auto max-h-[200px]">
-            {countries.map((country, index) => (
-              <div
-                key={index}
-                className="p-1 hover:bg-gray-200 cursor-pointer px-[20px] z-40"
-                onClick={() => handleSelectCountry(country.ac_name)}
-              >
-                {country.ac_name}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </main>
-  );
 }
 
 interface HC {
@@ -103,130 +21,39 @@ interface HC {
   hc_name: string;
 }
 
-function HostCountry() {
-  const [countries, setCountries] = useState<HC[]>([]);
-  const hcValue = useRecoilValue(hcState);
-  const setHcValue = useSetRecoilState(hcState);
-  const openFilterValue = useRecoilValue(openFilterState);
-  const setOpenFilterValue = useSetRecoilState(openFilterState);
-
-  const toggleDropdown = () => {
-    if (openFilterValue[1]) {
-      setOpenFilterValue([false, false, false]);
-    } else {
-      setOpenFilterValue([false, true, false]);
-    }
-  };
-
-  const handleSelectCountry = (country: string) => {
-    setHcValue(country);
-    setOpenFilterValue([false, false, false]);
-  };
-
-  const requestHC = async () => {
-    const url = `${process.env.NEXT_PUBLIC_API_URL}/hc`;
-    try {
-      const response = await axios.get(url);
-      if (response.status === 200) {
-        const countries = response.data;
-        // add "All" to the beginning of the array
-        const length = countries.length;
-        countries.unshift({ hc_id: 0, hc_name: `All (${length})` }); // `All (${length})
-        setCountries(countries);
-      }
-    } catch (error) {}
-  };
-
-  useEffect(() => {
-    requestHC();
-  }, []);
-
-  return (
-    <main className="flex flex-col space-y-[7px]">
-      <span className="text-[16px] font-[500]">(2) Host country</span>
-      <div className="relative">
-        <button
-          onClick={toggleDropdown}
-          className="border border-[1px] border-[#B4B1B1] bg-[#F5F5F5] flex w-[213px] h-[30px] py-[10px] px-[20px] items-center justify-between rounded-[8px] z-30"
-        >
-          {hcValue}
-          <Image
-            src="/icon_dropdown.svg"
-            alt="arrow-down"
-            width={18}
-            height={18}
-          />
-        </button>
-        {openFilterValue[1] && (
-          <div className="absolute border border-[1px] border-[#B4B1B1] bg-[#F5F5F5] flex flex-col w-[213px] mt-1 rounded-[8px] z-30 overflow-y-auto max-h-[200px]">
-            {countries.map((country, index) => (
-              <div
-                key={index}
-                className="p-1 hover:bg-gray-200 cursor-pointer px-[20px] z-40"
-                onClick={() => handleSelectCountry(country.hc_name)}
-              >
-                {country.hc_name}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </main>
-  );
-}
-
 interface MT {
   mt_id: number;
   mt_name: string;
 }
 
-function MitigationTechnology() {
-  const [countries, setCountries] = useState<MT[]>([]);
-  const openFilterValue = useRecoilValue(openFilterState);
-  const setOpenFilterValue = useSetRecoilState(openFilterState);
-  const mtValue = useRecoilValue(mtState);
-  const setMtValue = useSetRecoilState(mtState);
+interface FilterDropdownProps<T> {
+  title: string;
+  items: T[];
+  value: string;
+  onSelect: (val: string) => void;
+  open: boolean;
+  onToggle: () => void;
+  displayKey: keyof T;
+}
 
-  const toggleDropdown = () => {
-    if (openFilterValue[2]) {
-      setOpenFilterValue([false, false, false]);
-    } else {
-      setOpenFilterValue([false, false, true]);
-    }
-  };
-
-  const handleSelectCountry = (country: string) => {
-    setMtValue(country);
-    setOpenFilterValue([false, false, false]);
-  };
-
-  const requestMT = async () => {
-    const url = `${process.env.NEXT_PUBLIC_API_URL}/mt`;
-    try {
-      const response = await axios.get(url);
-      if (response.status === 200) {
-        const countries = response.data;
-        // add "All" to the beginning of the array
-        const length = countries.length;
-        countries.unshift({ mt_id: 0, mt_name: `All (${length})` }); // `All (${length})
-        setCountries(countries);
-      }
-    } catch (error) {}
-  };
-
-  useEffect(() => {
-    requestMT();
-  }, []);
-
+function FilterDropdown<T extends object>({
+  title,
+  items,
+  value,
+  onSelect,
+  open,
+  onToggle,
+  displayKey,
+}: FilterDropdownProps<T>) {
   return (
-    <main className="flex flex-col space-y-[7px]">
-      <span className="text-[16px] font-[500]">(3) Mitigation technology</span>
+    <div className="flex flex-col space-y-[7px]">
+      <span className="text-[16px] font-[500]">{title}</span>
       <div className="relative">
         <button
-          onClick={toggleDropdown}
-          className="border border-[1px] border-[#B4B1B1] bg-[#F5F5F5] flex w-[213px] h-[30px] py-[10px] px-[20px] items-center justify-between rounded-[8px] z-20"
+          onClick={onToggle}
+          className="border border-[1px] border-[#B4B1B1] bg-[#F5F5F5] flex w-[213px] h-[30px] py-[10px] px-[20px] items-center justify-between rounded-[8px]"
         >
-          {mtValue}
+          {value || "Select"}
           <Image
             src="/icon_dropdown.svg"
             alt="arrow-down"
@@ -234,20 +61,183 @@ function MitigationTechnology() {
             height={18}
           />
         </button>
-        {openFilterValue[2] && (
-          <div className="absolute border border-[1px] border-[#B4B1B1] bg-[#F5F5F5] flex flex-col w-[213px] mt-1 rounded-[8px] z-20 overflow-y-auto max-h-[200px]">
-            {countries.map((country, index) => (
+        {open && (
+          <div className="absolute border border-[1px] border-[#B4B1B1] bg-[#F5F5F5] w-[213px] mt-1 rounded-[8px] z-40 overflow-y-auto max-h-[200px] flex flex-col">
+            {items.map((item, idx) => (
               <div
-                key={index}
+                key={idx}
                 className="p-1 hover:bg-gray-200 cursor-pointer px-[20px]"
-                onClick={() => handleSelectCountry(country.mt_name)}
+                onClick={() => onSelect(String(item[displayKey]))}
               >
-                {country.mt_name}
+                {String(item[displayKey])}
               </div>
             ))}
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+export default function Filter() {
+  const setAcValue = useSetRecoilState(acState);
+  const setHcValue = useSetRecoilState(hcState);
+  const setMtValue = useSetRecoilState(mtState);
+
+  const handleReset = () => {
+    setAcValue("All");
+    setHcValue("All");
+    setMtValue("All");
+  };
+
+  return (
+    <main className="w-full flex flex-col space-y-4">
+      <div className="w-full flex md:flex-row flex-col md:space-x-[20px] space-y-[10px] md:space-y-0 md:items-end">
+        <AcquiringCountry />
+        <HostCountry />
+        <MitigationTechnology />
+        <button
+          onClick={handleReset}
+          className="border border-gray-300 bg-white px-4 py-1 rounded-md hover:bg-gray-100 text-sm h-[30px]"
+        >
+          Reset
+        </button>
+      </div>
     </main>
+  );
+}
+
+function AcquiringCountry() {
+  const [countries, setCountries] = useState<AC[]>([]);
+  const acValue = useRecoilValue(acState);
+  const hcValue = useRecoilValue(hcState);
+  const mtValue = useRecoilValue(mtState);
+  const setAcValue = useSetRecoilState(acState);
+  const openFilterArr = useRecoilValue(openFilterState);
+  const setOpenFilterArr = useSetRecoilState(openFilterState);
+
+  const onToggle = () => setOpenFilterArr([!openFilterArr[0], false, false]);
+  const onSelect = (val: string) => {
+    setAcValue(val);
+    setOpenFilterArr([false, false, false]);
+  };
+
+  const requestAC = async () => {
+    const params = new URLSearchParams();
+    if (hcValue && hcValue !== "All") params.append("hc", hcValue);
+    if (mtValue && mtValue !== "All") params.append("mt", mtValue);
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/ac${
+      params.toString() ? `?${params.toString()}` : ""
+    }`;
+    try {
+      const res = await axios.get(url);
+      if (res.status === 200) setCountries(res.data);
+    } catch (error) {}
+  };
+
+  useEffect(() => {
+    requestAC();
+  }, [hcValue, mtValue]);
+
+  return (
+    <FilterDropdown<AC>
+      title="Acquiring country"
+      items={countries}
+      value={acValue}
+      onSelect={onSelect}
+      open={openFilterArr[0]}
+      onToggle={onToggle}
+      displayKey="ac_name"
+    />
+  );
+}
+
+function HostCountry() {
+  const [countries, setCountries] = useState<HC[]>([]);
+  const acValue = useRecoilValue(acState);
+  const hcValue = useRecoilValue(hcState);
+  const mtValue = useRecoilValue(mtState);
+  const setHcValue = useSetRecoilState(hcState);
+  const openFilterArr = useRecoilValue(openFilterState);
+  const setOpenFilterArr = useSetRecoilState(openFilterState);
+
+  const onToggle = () => setOpenFilterArr([false, !openFilterArr[1], false]);
+  const onSelect = (val: string) => {
+    setHcValue(val);
+    setOpenFilterArr([false, false, false]);
+  };
+
+  const requestHC = async () => {
+    const params = new URLSearchParams();
+    if (acValue && acValue !== "All") params.append("ac", acValue);
+    if (mtValue && mtValue !== "All") params.append("mt", mtValue);
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/hc${
+      params.toString() ? `?${params.toString()}` : ""
+    }`;
+    try {
+      const res = await axios.get(url);
+      if (res.status === 200) setCountries(res.data);
+    } catch (error) {}
+  };
+
+  useEffect(() => {
+    requestHC();
+  }, [acValue, mtValue]);
+
+  return (
+    <FilterDropdown<HC>
+      title="Host country"
+      items={countries}
+      value={hcValue}
+      onSelect={onSelect}
+      open={openFilterArr[1]}
+      onToggle={onToggle}
+      displayKey="hc_name"
+    />
+  );
+}
+
+function MitigationTechnology() {
+  const [countries, setCountries] = useState<MT[]>([]);
+  const acValue = useRecoilValue(acState);
+  const hcValue = useRecoilValue(hcState);
+  const mtValue = useRecoilValue(mtState);
+  const setMtValue = useSetRecoilState(mtState);
+  const openFilterArr = useRecoilValue(openFilterState);
+  const setOpenFilterArr = useSetRecoilState(openFilterState);
+
+  const onToggle = () => setOpenFilterArr([false, false, !openFilterArr[2]]);
+  const onSelect = (val: string) => {
+    setMtValue(val);
+    setOpenFilterArr([false, false, false]);
+  };
+
+  const requestMT = async () => {
+    const params = new URLSearchParams();
+    if (acValue && acValue !== "All") params.append("ac", acValue);
+    if (hcValue && hcValue !== "All") params.append("hc", hcValue);
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/mt${
+      params.toString() ? `?${params.toString()}` : ""
+    }`;
+    try {
+      const res = await axios.get(url);
+      if (res.status === 200) setCountries(res.data);
+    } catch (error) {}
+  };
+
+  useEffect(() => {
+    requestMT();
+  }, [acValue, hcValue]);
+
+  return (
+    <FilterDropdown<MT>
+      title="Mitigation technology"
+      items={countries}
+      value={mtValue}
+      onSelect={onSelect}
+      open={openFilterArr[2]}
+      onToggle={onToggle}
+      displayKey="mt_name"
+    />
   );
 }

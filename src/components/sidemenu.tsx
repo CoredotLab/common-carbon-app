@@ -89,9 +89,9 @@ export default function SideMenu() {
               Map
             </Link>
             <Link
-              href="/cal/gemini"
+              href="/calculator"
               className={`w-full h-[60px] flex justify-center items-center ${isActive(
-                "cal"
+                "calculator"
               )}`}
               onClick={() => setMenuState(false)}
             >
