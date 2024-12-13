@@ -105,33 +105,30 @@ export default function Header() {
           </div>
 
           <nav className="md:flex hidden pr-[20px] space-x-[40px] flex items-center text-[20px] font-[600] h-[70px]">
-            <Link
-              href="/"
-              className={`w-[76px] flex justify-center ${isActive("")}`}
-            >
+            <Link href="/" className={`flex justify-center ${isActive("")}`}>
               HOME
             </Link>
             <Link
               href="/carbonai"
-              className={`w-[76px] flex justify-center ${isActive("carbonai")}`}
+              className={`flex justify-center ${isActive("carbonai")}`}
             >
               About CarbonAI
             </Link>
             <Link
               href="/cim"
-              className={`w-[76px] flex justify-center ${isActive("cim")}`}
+              className={`flex justify-center ${isActive("cim")}`}
             >
               Map
             </Link>
             <Link
               href="/cal/gemini"
-              className={`w-[76px] flex justify-center ${isActive("cal")}`}
+              className={`flex justify-center ${isActive("cal")}`}
             >
               Calculator
             </Link>
             <Link
               href=""
-              className={`w-[76px] flex justify-center ${isActive("cac")}`}
+              className={`flex justify-center ${isActive("cac")}`}
               onClick={() => {
                 alert("Service will be available soon!");
                 setMenuState(false);
