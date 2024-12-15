@@ -53,7 +53,7 @@ const AuthProvider = ({ children }) => {
     localStorage.removeItem("authTokens");
     localStorage.removeItem("email");
     localStorage.removeItem("role");
-    router.push("/signin");
+    router.push("/en/calculator");
   };
 
   return (

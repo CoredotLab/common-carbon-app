@@ -6,6 +6,7 @@ import localFont from "next/font/local";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
 import SideMenu from "@/components/sidemenu";
+import { Toaster } from "react-hot-toast";
 
 const pretendard = localFont({
   src: "../../PretendardVariable.ttf",
@@ -43,6 +44,7 @@ export default function RootLayout({
         <div className="relative min-h-screen flex flex-col items-center font-pretendard">
           <Header />
           <main className="flex-1 w-full">{children}</main>
+          <Toaster position="top-right" reverseOrder={false} />
           <Footer />
           <SideMenu />
         </div>
