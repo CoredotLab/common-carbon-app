@@ -17,13 +17,14 @@ export default async function Layout({ children }: { children: ReactNode }) {
   // 서버 환경에서 쿠키 가져오기
   const cookieStore = cookies();
   const sessionToken = cookieStore.get("session_token")?.value;
+  console.log("[Layout] sessionToken:", sessionToken);
 
   if (!sessionToken) {
-    // 세션 토큰이 없으면 로그인 페이지로
-    redirect("/en/calculator");
+    console.log("[Layout] sessionToken not found, redirecting...");
+    // redirect("/en/calculator");
+    return;
   }
 
-  // JWT 검증
   try {
     const encoder = new TextEncoder();
     const { payload } = await jwtVerify(
@@ -33,13 +34,10 @@ export default async function Layout({ children }: { children: ReactNode }) {
         algorithms: [ALGORITHM],
       }
     );
-
-    // payload 안에 user_id나 uid 검사 가능
-    // const userId = payload.sub;
-    // 만약 유효하지 않거나 만료되었다면 에러 발생
+    console.log("[Layout] JWT payload:", payload);
   } catch (e) {
-    // 검증 실패 -> 로그인 페이지로
-    redirect("/en/calculator");
+    console.error("[Layout] JWT verification failed:", e);
+    // redirect("/en/calculator");
   }
 
   // 여기까지 왔다면 쿠키 검증 성공, 인증된 상태이므로 children 렌더링
