@@ -20,25 +20,25 @@ export default async function Layout({ children }: { children: ReactNode }) {
   console.log("[Layout] sessionToken:", sessionToken);
 
   if (!sessionToken) {
-    console.log("[Layout] sessionToken not found, redirecting...");
+    // console.log("[Layout] sessionToken not found, redirecting...");
     // redirect("/en/calculator");
-    return;
+    // return;
   }
 
-  try {
-    const encoder = new TextEncoder();
-    const { payload } = await jwtVerify(
-      sessionToken,
-      encoder.encode(SECRET_KEY),
-      {
-        algorithms: [ALGORITHM],
-      }
-    );
-    console.log("[Layout] JWT payload:", payload);
-  } catch (e) {
-    console.error("[Layout] JWT verification failed:", e);
-    // redirect("/en/calculator");
-  }
+  // try {
+  //   const encoder = new TextEncoder();
+  //   const { payload } = await jwtVerify(
+  //     sessionToken,
+  //     encoder.encode(SECRET_KEY),
+  //     {
+  //       algorithms: [ALGORITHM],
+  //     }
+  //   );
+  //   console.log("[Layout] JWT payload:", payload);
+  // } catch (e) {
+  //   console.error("[Layout] JWT verification failed:", e);
+  //   // redirect("/en/calculator");
+  // }
 
   // 여기까지 왔다면 쿠키 검증 성공, 인증된 상태이므로 children 렌더링
   return (
