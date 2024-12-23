@@ -39,9 +39,7 @@ if (typeof window !== "undefined" && firebaseConfig.measurementId) {
     .then(({ getAnalytics }) => {
       analytics = getAnalytics(app);
     })
-    .catch((error) => {
-      console.error("Failed to initialize Firebase Analytics:", error);
-    });
+    .catch((error) => {});
 }
 
 export { auth, provider, analytics };

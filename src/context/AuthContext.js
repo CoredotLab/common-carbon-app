@@ -32,16 +32,11 @@ const AuthProvider = ({ children }) => {
     try {
       const decoded = jwt.decode(tokens.access_token);
 
-      // console.log("decoded", decoded);
-
       const { role } = decoded;
-
-      // console.log("decoded", decoded);
 
       localStorage.setItem("role", role);
       setRole(role);
     } catch (error) {
-      console.error("Error decoding, ", error);
       throw new Error("Token invalid.");
     }
 

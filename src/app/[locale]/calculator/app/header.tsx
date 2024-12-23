@@ -23,8 +23,8 @@ const Header: NextPage = () => {
       try {
         const res = await axios.get("/auth/me", { withCredentials: true });
         setEmail(res.data.email);
+        localStorage.setItem("email", res.data.email);
       } catch (err) {
-        console.error("Unable to get user info:", err);
         // 인증 안 된 경우 로그인 페이지로 돌려보낼 수도 있음
         // router.push("/en"); // 필요시 사용
       }
@@ -39,9 +39,7 @@ const Header: NextPage = () => {
       await axios.post("/auth/logout", {}, { withCredentials: true });
       logout();
       toast.success("Logged out successfully");
-    } catch (error) {
-      console.error("Error during sign out:", error);
-    }
+    } catch (error) {}
   };
 
   return (

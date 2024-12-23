@@ -88,9 +88,7 @@ export default function CimGraph() {
         setGraphData(data.graphData);
         setUsedTechnologies(data.usedTechnologies);
       }
-    } catch (error) {
-      console.error("Error fetching graph data:", error);
-    }
+    } catch (error) {}
   };
 
   useEffect(() => {

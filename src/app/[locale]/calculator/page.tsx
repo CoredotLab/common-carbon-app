@@ -7,6 +7,7 @@ import { auth, provider } from "../../../../firebase/firebaseConfig";
 import { signInWithPopup } from "firebase/auth";
 import useAxios from "@/utils/axios";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 
 interface BannerContent {
   imageSrc: string;
@@ -65,7 +66,6 @@ const SigninBox: NextPage = () => {
         router.push("/en/calculator/app/dashboard");
       } catch (error) {
         // 401 등 에러 발생 시 로그인 페이지 그대로 유지
-        // console.error("Not authenticated, staying on login page:", error);
       }
     };
     checkAuth();
@@ -119,11 +119,11 @@ const SigninBox: NextPage = () => {
         { idToken },
         { withCredentials: true }
       );
-
+      toast.success("Successfully logged in!");
       // 로그인 성공 시 대시보드로 이동
       router.push("/en/calculator/app/dashboard");
     } catch (error) {
-      console.error("Error during Google login or login request:", error);
+      toast.error("Failed to login. Please try again.");
     }
   };
 
@@ -172,7 +172,7 @@ const SigninBox: NextPage = () => {
             AI assistant
           </b>
         </div>
-        <b className="absolute top-[88.5px] left-[21px] text-5xl leading-[32px] font-label-large-bold text-color-common-white">
+        <b className="absolute top-[88.5px] left-[21px] md:text-5xl text-xl leading-[32px] font-label-large-bold text-color-common-white">
           {banners[currentBanner].slogan.map((line, i) => (
             <p className="m-0" key={i}>
               {line}

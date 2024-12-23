@@ -10,11 +10,9 @@ const LoginButton: React.FC = () => {
       const result = await signInWithPopup(auth, provider);
       // 로그인 성공 시 사용자 정보
       const user = result.user;
-      console.log("로그인 성공:", user);
+
       // 추가적인 처리 (예: 리다이렉션)
-    } catch (error) {
-      console.error("로그인 실패:", error);
-    }
+    } catch (error) {}
   };
 
   return (

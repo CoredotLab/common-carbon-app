@@ -46,7 +46,7 @@ function FilterDropdown<T extends object>({
   displayKey,
 }: FilterDropdownProps<T>) {
   return (
-    <div className="flex flex-col space-y-[7px] flex-1">
+    <div className="flex flex-col space-y-[7px] flex-1 w-full">
       <span className="text-[14px] font-[500]">{title}</span>
       <div className="relative">
         <button

@@ -78,9 +78,7 @@ export default function CimTable2() {
           setTableSubject(subject);
           updateTableData(data, window.innerWidth);
         }
-      } catch (error) {
-        console.error("Error fetching table data:", error);
-      }
+      } catch (error) {}
     };
     fetchTableData();
   }, [acValue, hcValue, mtValue]);

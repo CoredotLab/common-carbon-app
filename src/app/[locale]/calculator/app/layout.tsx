@@ -7,6 +7,7 @@ import Header from "./header";
 import { useRecoilState } from "recoil";
 import { showHeaderState } from "@/recoil/showHeaderState";
 import classNames from "classnames";
+import LayoutGuard from "./LayoutGuard";
 
 // 환경변수 로드 (NEXT_PUBLIC_* 로 클라이언트 전송), SECRET_KEY는 서버 전용
 const SECRET_KEY = process.env.NEXT_PUBLIC_SECRET_KEY || "fallback_key";
@@ -45,6 +46,7 @@ export default async function Layout({ children }: { children: ReactNode }) {
   return (
     <section className={classNames("flex flex-col", {})}>
       <Header />
+      <LayoutGuard />
       {children}
     </section>
   );

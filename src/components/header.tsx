@@ -32,40 +32,30 @@ export default function Header() {
   };
 
   useEffect(() => {
-    console.log("useEffect triggered");
-
     if (!isCalculator) {
-      console.log("Not in calculator page");
       setShowHeader(true);
       return;
     }
 
     // Calculator 페이지일 경우
-    console.log("In calculator page");
+
     setShowHeader(false);
 
     const handleWheel = (e: WheelEvent) => {
-      console.log(
-        `Wheel event detected: deltaY=${e.deltaY}, scrollY=${window.scrollY}`
-      );
-
       // 최상단(scrollY === 0)에서 사용자가 위로 스크롤(deltaY < 0) 시 헤더 표시
       if (window.scrollY === 0 && e.deltaY < 0) {
-        console.log("At top and scrolling up");
         setShowHeader(true);
         return;
       }
 
       // 헤더가 보이는 상태에서 아래로 스크롤 시(deltaY > 0) 헤더 숨기기
       if (e.deltaY > 0) {
-        console.log("Scrolling down");
         setShowHeader(false);
       }
     };
 
     window.addEventListener("wheel", handleWheel);
     return () => {
-      console.log("Cleaning up wheel event listener");
       window.removeEventListener("wheel", handleWheel);
     };
   }, [isCalculator, path, setShowHeader]);

@@ -83,9 +83,7 @@ export default function Home() {
       }
 
       await fetchLanguage(locale);
-    } catch (error) {
-      console.log("error", error);
-    }
+    } catch (error) {}
   };
 
   const fetchLanguage = async (code: string) => {
@@ -102,9 +100,7 @@ export default function Home() {
       setCodeLanguage(data.code);
       setNameLanguage(data.name);
       setCheckLanguage(true);
-    } catch (error) {
-      console.log("error", error);
-    }
+    } catch (error) {}
   };
 
   const sendMessage = async (e: FormEvent<HTMLFormElement>) => {
@@ -119,7 +115,7 @@ export default function Home() {
         return;
       }
     }
-    // console.log("inputValue", inputValue);
+
     setChoosenCapacity((prev) => inputValue);
 
     const lastMessage = messages[messages.length - 1];
@@ -190,14 +186,11 @@ export default function Home() {
       async start(controller) {
         function push() {
           reader?.read().then(({ done, value }) => {
-            // console.log("value>> ", value);
             if (done) {
               controller.close();
               return;
             }
             const text = new TextDecoder().decode(value);
-
-            // console.log("text >> ", text);
 
             controller.enqueue(text);
             push();
@@ -225,12 +218,10 @@ export default function Home() {
 
     setIsRequestGreeting(true);
     const handleFetchGreeting = async () => {
-      // console.log("Fetching greeting...");
       const stream = await fetchGreeting();
       const reader = stream.getReader();
       const chunks: string[] = [];
       if (messages.length === 0) {
-        // console.log("if here?");
         const emptyMessage: IMessage = {
           id: Date.now(),
           text: "",
@@ -241,14 +232,10 @@ export default function Home() {
 
       function read() {
         reader.read().then(({ done, value }) => {
-          // console.log("value>> ", value, typeof value);
           chunks.push(value);
           const text = chunks.join("");
-          // console.log("text 222>> ", text);
-          // console.log("value>>>>>", value);
-          if (done) {
-            // console.log("Stream done.", chunks.join(""));
 
+          if (done) {
             // time delay
             setTimeout(async () => {
               const chooseHostCountryOrNotMessage: IMessage = {
@@ -308,7 +295,6 @@ export default function Home() {
             };
             setMessages((currentMessages) => [...currentMessages, newMessage]);
           } else {
-            // console.log("enter");
             setMessages((currentMessages) => {
               const newMessages = [...currentMessages];
               const lastMessage = currentMessages[currentMessages.length - 1];
@@ -356,7 +342,6 @@ export default function Home() {
       const data = await response.json();
       return data;
     } catch (error) {
-      console.log("error", error);
       return text;
     }
   };
@@ -537,7 +522,6 @@ export default function Home() {
           };
           setMessages((currentMessages) => [...currentMessages, newMessage]);
         } else {
-          // console.log("enter");
           setMessages((currentMessages) => {
             const newMessages = [...currentMessages];
             const lastMessage = currentMessages[currentMessages.length - 1];
@@ -649,7 +633,6 @@ export default function Home() {
           };
           setMessages((currentMessages) => [...currentMessages, newMessage]);
         } else {
-          // console.log("enter");
           setMessages((currentMessages) => {
             const newMessages = [...currentMessages];
             const lastMessage = currentMessages[currentMessages.length - 1];
@@ -735,7 +718,6 @@ export default function Home() {
           };
           setMessages((currentMessages) => [...currentMessages, newMessage]);
         } else {
-          // console.log("enter");
           setMessages((currentMessages) => {
             const newMessages = [...currentMessages];
             const lastMessage = currentMessages[currentMessages.length - 1];
@@ -854,7 +836,6 @@ export default function Home() {
           };
           setMessages((currentMessages) => [...currentMessages, newMessage]);
         } else {
-          // console.log("enter");
           setMessages((currentMessages) => {
             const newMessages = [...currentMessages];
             const lastMessage = currentMessages[currentMessages.length - 1];
@@ -976,7 +957,6 @@ export default function Home() {
           };
           setMessages((currentMessages) => [...currentMessages, newMessage]);
         } else {
-          // console.log("enter");
           setMessages((currentMessages) => {
             const newMessages = [...currentMessages];
             const lastMessage = currentMessages[currentMessages.length - 1];
@@ -1025,7 +1005,6 @@ export default function Home() {
   };
 
   const addSampleHtmlTxtToMessages = (capacity: string) => {
-    // console.log("choosenCapacity", choosenCapacity, capacity);
     const capacityValue = choosenCapacity === "" ? capacity : choosenCapacity;
     // fetch from server
     const url = `${process.env.NEXT_PUBLIC_API_URL}/example?hc=${choosenHc}&mt=${choosenMt}&capacity=${capacityValue}&lang=${nameLanguage}`;
@@ -1130,9 +1109,7 @@ export default function Home() {
       a.click();
       a.parentNode?.removeChild(a);
       window.URL.revokeObjectURL(downloadUrl);
-    } catch (error) {
-      // console.error("There was an error!", error);
-    }
+    } catch (error) {}
   };
 
   // useEffect(() => {

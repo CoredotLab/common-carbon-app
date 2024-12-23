@@ -60,7 +60,7 @@ const colorMap: Record<string, string> = {
   [Technology.Transportation]: "#46a2cb",
 };
 
-export default function CimGraph() {
+export default function CimGraph2() {
   const [subject] = useState(
     "Performance graph by major carbon reduction technology over the past 5 years"
   );
@@ -88,9 +88,7 @@ export default function CimGraph() {
         setGraphData(data.graphData);
         setUsedTechnologies(data.usedTechnologies);
       }
-    } catch (error) {
-      console.error("Error fetching graph data:", error);
-    }
+    } catch (error) {}
   };
 
   useEffect(() => {

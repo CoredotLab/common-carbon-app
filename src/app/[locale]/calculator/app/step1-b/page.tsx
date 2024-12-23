@@ -40,7 +40,7 @@ interface Desc02Data {
 const Contents: NextPage = () => {
   const searchParams = useSearchParams();
   const mode = searchParams.get("mode"); // create 또는 view
-  const recordId = searchParams.get("recordid"); // 숫자 형태의 id
+  const session_id = searchParams.get("session_id"); // 숫자 형태의 id
 
   const { country, technology, setCountry, setTechnology } = useSelectedStore();
   const [aiSpeak, setAiSpeak] = useState<string>("");
@@ -50,6 +50,9 @@ const Contents: NextPage = () => {
   const [loading, setLoading] = useState(false);
 
   const router = useRouter();
+
+  const [fetchingAi, setFetchingAi] = useState(false); // AI 스트리밍 중 여부
+  const [fetchComplete, setFetchComplete] = useState(false); // 스트리밍 or view data fetch 완료
 
   const [codeLanguage, setCodeLanguage] = useState<string>("EN");
   const [nameLanguage, setNameLanguage] = useState<string>("English");
@@ -64,9 +67,7 @@ const Contents: NextPage = () => {
       }
 
       await fetchLanguage(locale);
-    } catch (error) {
-      console.log("error", error);
-    }
+    } catch (error) {}
   };
 
   const fetchLanguage = async (code: string) => {
@@ -83,59 +84,58 @@ const Contents: NextPage = () => {
       setCodeLanguage(data.code);
       setNameLanguage(data.name);
       setCheckLanguage(true);
-    } catch (error) {
-      console.log("error", error);
-    }
+    } catch (error) {}
   };
 
+  // create 모드에서 ai streaming
   const fetchAiSpeak = useCallback(async () => {
+    if (mode === "view") return;
     if (
       !country ||
       country === "Not selected" ||
       !technology ||
-      technology === "Not selected" ||
-      !nameLanguage
-    ) {
+      technology === "Not selected"
+    )
       return;
-    }
-
-    setAiSpeak(""); // 초기화
+    setAiSpeak("");
+    setFetchingAi(true);
+    setFetchComplete(false);
 
     try {
       const url = `${
         process.env.NEXT_PUBLIC_API_URL
       }/gemini/selectmt/desc?hc=${encodeURIComponent(
         country
-      )}&mt=${encodeURIComponent(technology)}&lang=${encodeURIComponent(
-        "English"
-      )}`;
+      )}&mt=${encodeURIComponent(technology)}&lang=English`;
 
       const response = await fetch(url);
       if (!response.body) {
-        console.error("No response body");
+        setFetchingAi(false);
         return;
       }
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder("utf-8");
       let result = "";
-
-      // 스트림 읽기
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
         result += decoder.decode(value, { stream: true });
         setAiSpeak(result);
       }
-    } catch (error) {
-      console.error("Error fetching AI speak:", error);
-    }
-  }, [country, technology, nameLanguage]);
 
-  // country, technology 선택 시 AI스피크 fetch
+      setFetchingAi(false);
+      setFetchComplete(true);
+    } catch (error) {
+      setFetchingAi(false);
+    }
+  }, [country, technology, mode]);
+
   useEffect(() => {
-    fetchAiSpeak();
-  }, [fetchAiSpeak]);
+    if (mode === "create") {
+      fetchAiSpeak();
+    }
+  }, [fetchAiSpeak, mode]);
 
   useEffect(() => {
     const doAsync = async () => {
@@ -144,11 +144,30 @@ const Contents: NextPage = () => {
     doAsync();
   }, []);
 
-  // country 선택 시 데이터 fetch
+  // view 모드일 경우 session_id로 session 정보 불러오기
+  const fetchViewModeData = useCallback(async () => {
+    if (mode === "view" && session_id) {
+      try {
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_API_URL}/calc_session/get_info?session_id=${session_id}`,
+          {
+            withCredentials: true,
+          }
+        );
+        const data = res.data;
+
+        if (data.aiSpeak) setAiSpeak(data.aiSpeak);
+
+        // view 모드는 바로 완료 처리
+        setFetchComplete(true);
+      } catch (err) {}
+    }
+  }, [mode, session_id]);
+
+  // country 변경 시 desc01, desc02 데이터 fetch
   useEffect(() => {
     const fetchData = async () => {
       if (!country || country === "Not selected") {
-        // 국가가 아직 선택되지 않음
         setDesc01Data(null);
         setDesc02Data(null);
         return;
@@ -167,7 +186,6 @@ const Contents: NextPage = () => {
         setDesc01Data(d1.data);
         setDesc02Data(d2.data);
       } catch (error) {
-        console.error("Error fetching data:", error);
         setDesc01Data(null);
         setDesc02Data(null);
       } finally {
@@ -175,21 +193,54 @@ const Contents: NextPage = () => {
       }
     };
 
-    fetchData();
+    if (country && country !== "Not selected") {
+      fetchData();
+    }
   }, [country]);
 
   useEffect(() => {
-    if (mode === "create") {
-      console.log("Create mode - 새로운 계산 로직을 시작합니다.");
-    } else if (mode === "view" && recordId) {
-      console.log(`View mode - recordid: ${recordId} 로 특정 데이터 조회`);
-    } else {
-      console.log("기본 상태 - mode가 지정되지 않음");
+    if (mode === "view") {
+      fetchViewModeData();
     }
-  }, [mode, recordId]);
+  }, [fetchViewModeData, mode]);
+
+  useEffect(() => {
+    if (mode === "create") {
+    } else if (mode === "view" && session_id) {
+    } else {
+    }
+  }, [mode, session_id]);
+
+  const handleNextClick = async () => {
+    if (!country || !technology) return;
+
+    // create 모드이고 session_id있고 ai streaming 완료 후 next 시 ai_speak 업데이트
+    if (mode === "create" && session_id) {
+      try {
+        await axios.post(
+          `${process.env.NEXT_PUBLIC_API_URL}/calc_session/update_ai_speak`,
+          { session_id: session_id, ai_speak: aiSpeak },
+          { withCredentials: true }
+        );
+      } catch (err) {}
+
+      router.push(
+        `/en/calculator/app/step2?mode=create&session_id=${session_id}`
+      );
+    } else if (mode === "view" && session_id && session_id) {
+      router.push(
+        `/en/calculator/app/step2?mode=view&session_id=${session_id}`
+      );
+    } else {
+      // mode나 recordId, sessionId 없는 경우 fallback
+      router.push("/en/calculator");
+    }
+  };
+
+  const isNextDisabled = mode === "create" && (!fetchComplete || fetchingAi);
 
   return (
-    <div className="w-full flex justify-center items-center md:pt-20">
+    <div className="w-full flex justify-center items-center md:py-20">
       <div className="w-full max-w-[764px] md:max-h-[800px] max-h-[600px] relative rounded-2xl bg-white bg-opacity-[40%] overflow-hidden flex flex-col items-start justify-start p-8 box-border text-left text-sm text-color-text-light font-label-medium-bold overflow-y-auto">
         {/* Steps */}
         <div className="self-stretch flex flex-col items-start justify-start pt-0 px-0 pb-6 gap-2">
@@ -212,7 +263,7 @@ const Contents: NextPage = () => {
               <b className="relative leading-[16px] opacity-[0.5]">Finish</b>
             </div>
           </div>
-          <div className="self-stretch flex flex-col items-start justify-start gap-2 text-5xl text-black">
+          <div className="self-stretch flex flex-col items-start justify-start gap-2 md:text-5xl text-xl text-black">
             <b className="self-stretch relative leading-[32px]">
               Choose your country and technology
             </b>
@@ -472,26 +523,30 @@ const Contents: NextPage = () => {
             <b className="relative leading-[25px]">Common Carbon Assistant</b>
           </div>
           <div className="self-stretch relative text-base leading-[22px] text-color-text-default">
-            {aiSpeak ||
-              `"India has significant potential for solar energy... (example text)"`}
+            {fetchingAi && (
+              <div className="text-sm text-gray-500">
+                Loading AI response...
+                {/* 로딩 스피너 예: <Spinner/> */}
+              </div>
+            )}
+            {!fetchingAi && !aiSpeak && mode === "view" && (
+              <div className="md:text-sm text-base text-gray-500">
+                No AI Data found.
+              </div>
+            )}
+            {aiSpeak && <div>{aiSpeak}</div>}
           </div>
         </div>
 
         <div className="self-stretch flex justify-end">
           <button
-            onClick={() => {
-              // mode 그대로 전달하면서 다음 단계로 이동
-              if (country && technology) {
-                if (mode === "create") {
-                  router.push(`/en/calculator/app/step2?mode=create`);
-                } else {
-                  router.push(
-                    `/en/calculator/app/step2?mode=view&recordid=${recordId}`
-                  );
-                }
-              }
-            }}
-            className="w-[160px] relative rounded-[1000px] [background:linear-gradient(180deg,_#0d5247,_#0a3e36)] flex flex-row items-center justify-center py-2 px-number-spacing-spacing-xs box-border text-left text-base text-color-common-white font-label-medium-bold"
+            onClick={handleNextClick}
+            disabled={isNextDisabled}
+            className={`w-[160px] relative rounded-[1000px] [background:linear-gradient(180deg,_#0d5247,_#0a3e36)] flex flex-row items-center justify-center py-2 px-[8px] box-border text-left text-base font-label-medium-bold ${
+              isNextDisabled
+                ? "opacity-50 cursor-not-allowed"
+                : "text-color-common-white cursor-pointer"
+            }`}
           >
             <b className="relative leading-[18px]">Next</b>
           </button>
