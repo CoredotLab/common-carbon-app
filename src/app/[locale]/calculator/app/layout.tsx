@@ -17,7 +17,6 @@ export default async function Layout({ children }: { children: ReactNode }) {
   // 서버 환경에서 쿠키 가져오기
   const cookieStore = cookies();
   const sessionToken = cookieStore.get("session_token")?.value;
-  console.log("[Layout] sessionToken:", sessionToken);
 
   if (!sessionToken) {
     // console.log("[Layout] sessionToken not found, redirecting...");

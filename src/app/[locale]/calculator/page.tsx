@@ -120,7 +120,6 @@ const SigninBox: NextPage = () => {
         { withCredentials: true }
       );
 
-      console.log(res.data);
       toast.success("Successfully logged in!");
       // 로그인 성공 시 대시보드로 이동
       router.push("/en/calculator/app/dashboard");
