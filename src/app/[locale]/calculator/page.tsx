@@ -162,14 +162,14 @@ const SigninBox: NextPage = () => {
             />
           ))}
         </div>
-        <div className="absolute top-[24px] left-[24px] w-[146px] h-[47.5px]">
+        <div className="absolute top-[24px] left-[24px] w-full h-[47.5px]">
           <Image
             width={142}
             height={14}
             alt="logo_cc"
             src="/calculator/logo_cc.svg"
           />
-          <b className="block mt-2 leading-[28px] text-color-common-white">
+          <b className="block mt-2 leading-[28px] text-[#2bb197] text-[28px] font-bold font-['Eurostile'] leading-7 w-full">
             AI assistant
           </b>
         </div>
