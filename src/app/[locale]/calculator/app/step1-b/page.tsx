@@ -522,7 +522,7 @@ const Contents: NextPage = () => {
             />
             <b className="relative leading-[25px]">Common Carbon Assistant</b>
           </div>
-          <div className="self-stretch relative text-base leading-[22px] text-color-text-default">
+          <div className="relative text-base leading-[22px] text-color-text-default">
             {fetchingAi && (
               <div className="text-sm text-gray-500">
                 Loading AI response...
@@ -534,7 +534,9 @@ const Contents: NextPage = () => {
                 No AI Data found.
               </div>
             )}
-            {aiSpeak && <div>{aiSpeak}</div>}
+            <pre className="text-sm text-black whitespace-pre-wrap break-words">
+              {aiSpeak}
+            </pre>
           </div>
         </div>
 
