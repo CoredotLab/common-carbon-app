@@ -24,23 +24,23 @@ function Values() {
     {
       image: "/home/value_transparency.png",
       title: "Data Transparency",
-      description1: "Carbon Impact MAP. ",
-      description2: "We track and identify",
-      description3: "honest carbon reductions.",
+      description1: "We track and provide",
+      description2: "credible carbon reduction data",
+      description3: "using our Carbon Impact Map (CIM).",
     },
     {
       image: "/home/value_efficiency.png",
       title: "Operational Efficiency",
-      description1: "Embrace the power of GPT ",
-      description2: "in your carbon solution documents.",
-      description3: " ",
+      description1: "We utilize the power",
+      description2: "of AI to streamline",
+      description3: "your carbon reduction projects.",
     },
     {
       image: "/home/value_together.png",
       title: "Endurance",
-      description1: "Join our Coalition, ",
-      description2: "before we join you",
-      description3: " ",
+      description1: "Join our platform",
+      description2: "to maximize your impact.",
+      description3: "",
     },
   ];
   return (
