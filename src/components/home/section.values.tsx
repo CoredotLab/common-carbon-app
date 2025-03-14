@@ -37,7 +37,7 @@ function Values() {
     },
     {
       image: "/home/value_together.png",
-      title: "Endurance",
+      title: "Impact",
       description1: "Join our platform",
       description2: "to maximize your impact.",
       description3: "",
