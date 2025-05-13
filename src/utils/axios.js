@@ -32,7 +32,7 @@ const useAxios = () => {
     (error) => {
       if (error.response && error.response.status === 401) {
         // 인증 만료나 실패 시 로그아웃 처리
-        logout();
+        // logout();
       }
       return Promise.reject(error);
     }

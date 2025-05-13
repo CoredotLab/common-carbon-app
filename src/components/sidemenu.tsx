@@ -98,14 +98,10 @@ export default function SideMenu() {
               Calculator
             </Link>
             <Link
-              href="/"
+              href="/caa"
               className={`w-full h-[60px] flex justify-center items-center ${isActive(
-                "cac"
+                "caa"
               )}`}
-              onClick={() => {
-                alert("Service will be available soon!");
-                setMenuState(false);
-              }}
             >
               AutoChecker
             </Link>

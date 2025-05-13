@@ -48,7 +48,7 @@ const AuthProvider = ({ children }) => {
     localStorage.removeItem("authTokens");
     localStorage.removeItem("email");
     localStorage.removeItem("role");
-    router.push("/en/calculator");
+    // router.push("/en/calculator");
   };
 
   return (

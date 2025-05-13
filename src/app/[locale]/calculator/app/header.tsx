@@ -39,6 +39,7 @@ const Header: NextPage = () => {
       await axios.post("/auth/logout", {}, { withCredentials: true });
       logout();
       toast.success("Logged out successfully");
+      router.push("/en/calculator");
     } catch (error) {}
   };
 

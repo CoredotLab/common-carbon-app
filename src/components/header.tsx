@@ -19,7 +19,10 @@ export default function Header() {
   const isHome = path === "/en" || path === "/ko";
   const isCarbonai = path === "/en/carbonai" || path === "/ko/carbonai";
   const isCalculator =
-    path.startsWith("/en/calculator") || path.startsWith("/ko/calculator");
+    path.startsWith("/en/calculator") ||
+    path.startsWith("/ko/calculator") ||
+    path.startsWith("/en/caa") ||
+    path.startsWith("/ko/caa");
 
   const isActive = (_path: string) => {
     const pathSplit = path.split("/");
@@ -43,7 +46,7 @@ export default function Header() {
 
     const handleWheel = (e: WheelEvent) => {
       // 최상단(scrollY === 0)에서 사용자가 위로 스크롤(deltaY < 0) 시 헤더 표시
-      if (window.scrollY === 0 && e.deltaY < 0) {
+      if (window.scrollY === 0 && e.deltaY < -40) {
         setShowHeader(true);
         return;
       }
@@ -104,12 +107,8 @@ export default function Header() {
               Calculator
             </Link>
             <Link
-              href=""
-              className={`flex justify-center ${isActive("cac")}`}
-              onClick={() => {
-                alert("Service will be available soon!");
-                setMenuState(false);
-              }}
+              href="/caa"
+              className={`flex justify-center ${isActive("caa")}`}
             >
               AutoChecker
             </Link>
@@ -167,12 +166,8 @@ export default function Header() {
               Calculator
             </Link>
             <Link
-              href=""
-              className={`flex justify-center ${isActive("cac")}`}
-              onClick={() => {
-                alert("Service will be available soon!");
-                setMenuState(false);
-              }}
+              href="/caa"
+              className={`flex justify-center ${isActive("caa")}`}
             >
               AutoChecker
             </Link>
