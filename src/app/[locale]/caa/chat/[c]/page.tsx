@@ -50,25 +50,77 @@ export default function ChatPage({ params }: { params: { c: string } }) {
   }, [params.c, promptQS]);
 
   /* ---------- ② 기존 챗 로딩 ---------- */
+  /* ---------- ② 기존 챗 로딩 ---------- */
   useEffect(() => {
     if (!id || params.c === "new") return;
+
+    let pollId: number | null = null; // ← interval 핸들러
+
     (async () => {
       try {
         setLoading(true);
         const { data } = await api.get(`/api/chat_caa/conversations/${id}`);
 
         setConversationId(data.conversation_id);
+
+        // 1) 메시지 → state
         setMessages(
           data.messages.map((m: any) => ({
             messageId: m.message_id,
             role: m.role,
             content: m.content,
             rating: m.rating,
+            status: m.status, // ✔︎ pending / done
             sources: m.sources,
             relatedQuestions:
               m.role === "assistant" ? data.last_related_questions : undefined,
+            thinking: m.role === "assistant" && m.status === "pending",
           }))
         );
+
+        // 2) assistant 가 아직 pending 이면 2-초 간격 폴링 시작
+        const isPending = data.messages.some(
+          (m: any) => m.role === "assistant" && m.status === "pending"
+        );
+
+        if (isPending) {
+          pollId = window.setInterval(async () => {
+            try {
+              const { data: p } = await api.get(
+                `/api/chat_caa/conversations/${id}`
+              );
+
+              const last = [...p.messages]
+                .reverse()
+                .find((m: any) => m.role === "assistant");
+
+              if (last && last.status === "done") {
+                // placeholder(bub.status===pending) 제거 후 실제 답변 삽입
+                setMessages((prev) => {
+                  const cleaned = prev.filter(
+                    (m) => !(m.role === "assistant" && m.status === "pending")
+                  );
+                  return [
+                    ...cleaned,
+                    {
+                      messageId: last.message_id,
+                      role: "assistant",
+                      content: last.content,
+                      rating: last.rating,
+                      status: "done",
+                      sources: last.sources,
+                      relatedQuestions: p.last_related_questions,
+                    },
+                  ];
+                });
+                window.clearInterval(pollId!);
+              }
+            } catch (e) {
+              console.error("polling error ⇒ stop", e);
+              clearInterval(pollId!);
+            }
+          }, 2000);
+        }
       } catch {
         alert("대화 불러오기에 실패했습니다.");
         router.replace("/en/caa");
@@ -76,6 +128,11 @@ export default function ChatPage({ params }: { params: { c: string } }) {
         setLoading(false);
       }
     })();
+
+    // ─ cleanup ───────────────────────────────
+    return () => {
+      if (pollId) clearInterval(pollId);
+    };
   }, [id]);
 
   /* ======================================================================== */
@@ -97,6 +154,7 @@ export default function ChatPage({ params }: { params: { c: string } }) {
           role: "assistant",
           messageId: data.assistant_msg_id ?? 0,
           content: data.assistant_reply,
+          status: data.status,
           rating: "none",
           sources: data.sources,
           relatedQuestions: data.related_questions,
@@ -123,6 +181,7 @@ export default function ChatPage({ params }: { params: { c: string } }) {
       {
         role: "assistant",
         content: "Thinking…",
+        status: "pending",
         rating: "none",
         thinking: true,
       },
@@ -370,7 +429,7 @@ const ChatBubble = ({
       );
     }
 
-    if (message.thinking) {
+    if (message.thinking || message.status === "pending") {
       return <ThinkingDots />;
     }
 

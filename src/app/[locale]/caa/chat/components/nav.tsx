@@ -7,6 +7,7 @@ import { format, isToday, isYesterday } from "date-fns";
 import useAxios from "@/utils/axios";
 import Image from "next/image";
 import { groupSortKey } from "@/utils/dateLabel";
+import ConversationItem from "./ConversationItem";
 
 interface ConversationItem {
   conversation_id: number;
@@ -99,13 +100,33 @@ export default function SidebarNav() {
                   const active = it.conversation_id === currentId;
                   return (
                     <li key={it.conversation_id}>
-                      <Link
-                        href={`/en/caa/chat/${it.conversation_id}`}
-                        className={`block rounded-lg p-3 truncate
-                        ${active ? "bg-white shadow-sm" : ""}`}
-                      >
-                        {it.title || "(untitled)"}
-                      </Link>
+                      <ConversationItem
+                        item={it}
+                        active={active}
+                        /* ── ① 로컬 state 업데이트 콜백 ── */
+                        onRenamed={(title) =>
+                          setGroups((prev) => {
+                            const copy = { ...prev };
+                            copy[label] = copy[label].map((c) =>
+                              c.conversation_id === it.conversation_id
+                                ? { ...c, title }
+                                : c
+                            );
+                            return copy;
+                          })
+                        }
+                        onDeleted={() =>
+                          setGroups((prev) => {
+                            const copy = { ...prev };
+                            copy[label] = copy[label].filter(
+                              (c) => c.conversation_id !== it.conversation_id
+                            );
+                            /* 빈 그룹 제거 */
+                            if (!copy[label].length) delete copy[label];
+                            return copy;
+                          })
+                        }
+                      />
                     </li>
                   );
                 })}

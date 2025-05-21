@@ -56,7 +56,7 @@ const SigninBox: NextPage = () => {
         const res = await axios.get("/auth/me", { withCredentials: true });
         // 인증 성공하면 대시보드로 이동
         localStorage.setItem("email", res.data.email);
-        router.push("/en/caa");
+        router.push("/en/caa/chat");
       } catch (error) {
         // 401 등 에러 발생 시 로그인 페이지 그대로 유지
       }

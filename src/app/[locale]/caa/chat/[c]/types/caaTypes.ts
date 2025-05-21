@@ -1,10 +1,12 @@
 /* ---------------- types ---------------- */
 export type Rating = "none" | "like" | "dislike";
+export type MsgStatus = "pending" | "done";
 
 export interface ChatMessage {
   messageId?: number; // assistant 메시지 PK
   role: "user" | "assistant";
   content: string;
+  status?: MsgStatus;
   rating: Rating;
   sources?: { label: string; url: string | null }[];
   relatedQuestions?: string[];
