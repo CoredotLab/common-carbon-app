@@ -47,6 +47,7 @@
     "remark-gfm": "^4.0.1",
     "shortid": "^2.2.16",
     "swiper": "^11.0.5",
+    "swr": "^2.3.3",
     "zustand": "^5.0.2"
   },
   "devDependencies": {

@@ -1,17 +1,13 @@
+// src/app/layout.tsx  (server component)
 import { ReactNode } from "react";
-import RecoilRootProvider from "./recoilRootProvider";
-import { AuthProvider } from "@/context/AuthContext";
+import ClientProviders from "./ClientProviders";
 
-type Props = {
-  children: ReactNode;
-};
-
-// Since we have a `not-found.tsx` page on the root, a layout file
-// is required, even if it's just passing children through.
-export default function RootLayout({ children }: Props) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <RecoilRootProvider>
-      <AuthProvider>{children}</AuthProvider>
-    </RecoilRootProvider>
+    <html lang="en">
+      <body>
+        <ClientProviders>{children}</ClientProviders>
+      </body>
+    </html>
   );
 }

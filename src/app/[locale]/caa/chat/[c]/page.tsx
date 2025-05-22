@@ -18,6 +18,7 @@ import {
   ConsultModal,
   FeedbackModal,
 } from "./components/ConsultOrFeedbackModal";
+import { mutate } from "swr";
 
 export default function ChatPage({ params }: { params: { c: string } }) {
   /* ---------------- state ---------------- */
@@ -143,6 +144,9 @@ export default function ChatPage({ params }: { params: { c: string } }) {
   const createConversation = async (text: string) => {
     try {
       setLoading(true);
+      await mutate(
+        "/api/chat_caa/users/me/conversations?limit=50&sort=updated_desc"
+      );
       const { data } = await api.post("/api/chat_caa/conversations", {
         title: text.slice(0, 50),
         initial_message: text,
@@ -162,11 +166,15 @@ export default function ChatPage({ params }: { params: { c: string } }) {
       ]);
 
       router.replace(`/en/caa/chat/${data.conversation_id}`);
+      // 대화 처음 만들고 나서
     } catch (e: any) {
       alert(e.response?.data?.detail ?? "대화를 생성할 수 없습니다.");
       router.replace("/en/caa");
     } finally {
       setLoading(false);
+      await mutate(
+        "/api/chat_caa/users/me/conversations?limit=50&sort=updated_desc"
+      );
     }
   };
 
