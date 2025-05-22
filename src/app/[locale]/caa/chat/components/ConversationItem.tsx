@@ -57,7 +57,7 @@ export default function ConversationItem({
     if (!next || next === item.title) return;
 
     try {
-      await api.patch(`/api/chat_caa/conversations/${item.conversation_id}`, {
+      await api.put(`/api/chat_caa/conversations/${item.conversation_id}`, {
         title: next,
       });
       onRenamed(next);
