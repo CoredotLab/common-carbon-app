@@ -107,7 +107,7 @@ const SigninBox: NextPage = () => {
       const user = result.user;
       const idToken = await user.getIdToken();
 
-      console.log("Google ID Token:", idToken);
+      // console.log("Google ID Token:", idToken);
 
       const res = await axios.post(
         "/auth/login",
