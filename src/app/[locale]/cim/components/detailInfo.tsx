@@ -2,15 +2,16 @@
 
 import { useWindowResize } from "@/hooks/useWindowResize";
 import { detailInfoState } from "@/recoil/detailInfoState";
-import { acState, hcState, mtState } from "@/recoil/filterState";
+import { acState, hcState, mtState, verifierState } from "@/recoil/filterState";
 import axios from "axios";
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRecoilValue, useSetRecoilState } from "recoil";
 
 interface TableRow {
   ac: string;
   hc: string;
   mt: string;
+  verifier: string;
   projectTitle: string;
   reduction: number;
   company_ac: string;
@@ -25,6 +26,7 @@ interface TableRowResponse {
   ac: string;
   hc: string;
   mt: string;
+  verifier: string;
   title: string;
   reduction: number;
   company_ac: string;
@@ -42,6 +44,8 @@ export default function CimDetailInfo() {
   const acValue = useRecoilValue(acState);
   const hcValue = useRecoilValue(hcState);
   const mtValue = useRecoilValue(mtState);
+  const vValue = useRecoilValue(verifierState);
+
   const innerWidth = useWindowResize();
   const detailInfoValue = useRecoilValue(detailInfoState);
   const setDetailInfoState = useSetRecoilState(detailInfoState);
@@ -63,6 +67,7 @@ export default function CimDetailInfo() {
     if (!acValue.includes("All")) urlParams.append("ac", acValue);
     if (!hcValue.includes("All")) urlParams.append("hc", hcValue);
     if (!mtValue.includes("All")) urlParams.append("mt", mtValue);
+    if (vValue !== "All") urlParams.append("verifier", vValue);
 
     const url = `${
       process.env.NEXT_PUBLIC_API_URL
@@ -78,6 +83,7 @@ export default function CimDetailInfo() {
               ac: row.ac,
               hc: row.hc,
               mt: row.mt,
+              verifier: row.verifier,
               projectTitle: row.title,
               reduction: row.reduction,
               company_ac: row.company_ac,
@@ -96,7 +102,7 @@ export default function CimDetailInfo() {
       } catch (error) {}
     };
     requestTableData();
-  }, [acValue, hcValue, mtValue, isShown]);
+  }, [acValue, hcValue, mtValue, isShown, vValue]);
 
   const formatNumber = (num: number) => {
     return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -133,6 +139,10 @@ export default function CimDetailInfo() {
                   Company Name(HC)
                 </th>
                 <th className="border border-r-1 text-start p-[10px]">
+                  Verifier
+                </th>
+
+                <th className="border border-r-1 text-start p-[10px]">
                   Methodology
                 </th>
                 <th className="border border-r-1 text-start p-[10px]">
@@ -168,6 +178,7 @@ export default function CimDetailInfo() {
                   <td className="pl-[10px]">{data.projectTitle}</td>
                   <td className="pl-[10px]">{data.company_ac}</td>
                   <td className="pl-[10px]">{data.company_hc}</td>
+                  <td className="pl-[10px]">{data.verifier}</td>
                   <td className="pl-[10px]">{data.methodology}</td>
                   <td className="pl-[10px]">{data.startDate}</td>
                   <td className="pl-[10px]">{data.endDate}</td>

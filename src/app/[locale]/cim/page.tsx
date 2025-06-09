@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import Title from "./components/title";
-import Filter from "./components/filter";
+import Filter from "./components/filter2";
 import CimMap from "./components/map";
 import CimGraph from "./components/graph";
 import CimTable from "./components/table";

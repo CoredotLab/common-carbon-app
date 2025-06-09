@@ -1,6 +1,6 @@
 "use client";
 
-import { acState, hcState, mtState } from "@/recoil/filterState";
+import { acState, hcState, mtState, verifierState } from "@/recoil/filterState";
 import { detailInfoState } from "@/recoil/detailInfoState";
 import { useRecoilValue, useSetRecoilState } from "recoil";
 import { useEffect, useState } from "react";
@@ -26,6 +26,7 @@ export default function CimTable2() {
   const acValue = useRecoilValue(acState);
   const hcValue = useRecoilValue(hcState);
   const mtValue = useRecoilValue(mtState);
+  const vValue = useRecoilValue(verifierState);
   const detailInfoValue = useRecoilValue(detailInfoState);
   const setDetailInfoState = useSetRecoilState(detailInfoState);
 
@@ -66,6 +67,7 @@ export default function CimTable2() {
       if (!acValue.includes("All")) urlParams.append("ac", acValue);
       if (!hcValue.includes("All")) urlParams.append("hc", hcValue);
       if (!mtValue.includes("All")) urlParams.append("mt", mtValue);
+      if (vValue !== "All") urlParams.append("verifier", vValue);
 
       const url = `${
         process.env.NEXT_PUBLIC_API_URL
@@ -81,7 +83,7 @@ export default function CimTable2() {
       } catch (error) {}
     };
     fetchTableData();
-  }, [acValue, hcValue, mtValue]);
+  }, [acValue, hcValue, mtValue, vValue]);
 
   useEffect(() => {
     if (tableData.length > 0) {

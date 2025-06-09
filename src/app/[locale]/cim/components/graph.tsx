@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
 import {
   AreaChart,
@@ -12,9 +12,15 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { useRecoilValue } from "recoil";
-import { acState, hcState, mtState } from "@/recoil/filterState";
+import {
+  verifierState, // ▶︎ NEW
+  acState,
+  hcState,
+  mtState,
+} from "@/recoil/filterState";
 import axios from "axios";
 
+/* ---------- 타입 ---------- */
 interface GraphData {
   year: string;
   hydro: number;
@@ -28,7 +34,10 @@ interface GraphData {
   infra: number;
   transportation: number;
 }
-
+interface GraphResponse {
+  graphData: GraphData[];
+  usedTechnologies: string[];
+}
 enum Technology {
   Hydro = "Hydro",
   WaterPurification = "Water purification",
@@ -42,17 +51,13 @@ enum Technology {
   Transportation = "Transportation",
 }
 
-interface GraphResponse {
-  graphData: GraphData[];
-  usedTechnologies: string[];
-}
-
+/* ---------- 색상 맵 ---------- */
 const colorMap: Record<string, string> = {
   [Technology.Hydro]: "#8884d8",
   [Technology.WaterPurification]: "#82ca9d",
   [Technology.NaturalGas]: "#ffc658",
   [Technology.Cookstove]: "#D85A8D",
-  [Technology.Solar]: "#D88D",
+  [Technology.Solar]: "#D88D", // 기존 값 그대로
   [Technology.Led]: "#FF9352",
   [Technology.Wind]: "#fb3a73",
   [Technology.Biomass]: "#247a47",
@@ -61,65 +66,62 @@ const colorMap: Record<string, string> = {
 };
 
 export default function CimGraph() {
-  const [subject] = useState(
-    "Performance graph by major carbon reduction technology over the past 5 years"
-  );
+  /* ---------- 상태 ---------- */
   const [graphData, setGraphData] = useState<GraphData[]>([]);
   const [usedTechnologies, setUsedTechnologies] = useState<string[]>([]);
 
+  /* ---------- 필터 값 ---------- */
+  const vValue = useRecoilValue(verifierState); // ▶︎ NEW
   const acValue = useRecoilValue(acState);
   const hcValue = useRecoilValue(hcState);
   const mtValue = useRecoilValue(mtState);
 
-  const requestGraphData = async () => {
-    const urlParams = new URLSearchParams();
-    if (!acValue.includes("All")) urlParams.append("ac", acValue);
-    if (!hcValue.includes("All")) urlParams.append("hc", hcValue);
-    if (!mtValue.includes("All")) urlParams.append("mt", mtValue);
-
-    const url = `${
-      process.env.NEXT_PUBLIC_API_URL
-    }/graph?${urlParams.toString()}`;
+  /* ---------- 데이터 패치 ---------- */
+  const fetchGraphData = useCallback(async () => {
+    const params = new URLSearchParams();
+    if (vValue !== "All") params.append("verifier", vValue); // ▶︎ NEW
+    if (acValue !== "All") params.append("ac", acValue);
+    if (hcValue !== "All") params.append("hc", hcValue);
+    if (mtValue !== "All") params.append("mt", mtValue);
 
     try {
-      const response = await axios.get(url);
-      if (response.status === 200) {
-        const data = response.data as GraphResponse;
+      const { data, status } = await axios.get<GraphResponse>(
+        `${process.env.NEXT_PUBLIC_API_URL}/graph?${params.toString()}`
+      );
+      if (status === 200) {
         setGraphData(data.graphData);
         setUsedTechnologies(data.usedTechnologies);
       }
-    } catch (error) {}
-  };
+    } catch (_) {
+      /* 에러 무시 */
+    }
+  }, [vValue, acValue, hcValue, mtValue]);
 
   useEffect(() => {
-    requestGraphData();
-  }, [acValue, hcValue, mtValue]);
+    fetchGraphData();
+  }, [fetchGraphData]);
 
+  /* ---------- 렌더 ---------- */
   return (
     <main className="flex flex-col w-full h-[232px] shrink-0 space-y-[11px]">
       <div className="flex flex-col space-y-[5px]">
         <span className="text-[24px] font-[700]">Overview data</span>
-        <span className="text-[11px] font-[500]">{subject}</span>
+        <span className="text-[11px] font-[500]">
+          Performance graph by major carbon reduction technology over the past 5
+          years
+        </span>
       </div>
+
       <div className="flex w-full h-full space-x-[10px]">
+        {/* ----- 그래프 영역 ----- */}
         <div className="w-full h-full max-h-[170px]">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart
               data={graphData}
-              margin={{
-                top: 0,
-                right: 0,
-                left: -15,
-                bottom: 0,
-              }}
+              margin={{ top: 0, right: 0, left: -15, bottom: 0 }}
             >
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis
-                dataKey="year"
-                tick={{ fontSize: 10 }}
-                // 필요하다면 ticks props로 표시하고 싶은 년도를 명시
-                // ticks={["2018", "2020", "2022"]}
-              />
+              <XAxis dataKey="year" tick={{ fontSize: 10 }} />
               <YAxis tick={{ fontSize: 10 }} />
               <Tooltip contentStyle={{ fontSize: 12 }} />
 
@@ -131,7 +133,7 @@ export default function CimGraph() {
                     dataKey={
                       tech === Technology.WaterPurification
                         ? "waterPurification"
-                        : tech.toLowerCase() // tech에 따라 소문자 프로퍼티 변환 필요시 수정
+                        : tech.toLowerCase() /* 기존 로직 유지 */
                     }
                     stackId="1"
                     stroke={colorMap[tech]}
@@ -142,6 +144,8 @@ export default function CimGraph() {
             </AreaChart>
           </ResponsiveContainer>
         </div>
+
+        {/* ----- 범례 영역 ----- */}
         <div className="w-[105px] flex flex-col h-full justify-start leading-[12px]">
           {Object.values(Technology).map((tech) =>
             usedTechnologies.includes(tech) ? (
@@ -152,7 +156,7 @@ export default function CimGraph() {
                 <div
                   className="w-[8px] h-[8px] rounded-[100px] shrink-0"
                   style={{ backgroundColor: colorMap[tech] }}
-                ></div>
+                />
                 <span className="text-[12px] font-[500]">
                   {tech === Technology.Hydro
                     ? "hydroelectric power"

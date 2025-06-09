@@ -1,9 +1,15 @@
 "use client";
-import { acState, hcState, mtState } from "@/recoil/filterState";
+
+import { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
-import { useEffect, useState } from "react";
-import { useRecoilValue, useSetRecoilState } from "recoil";
 import axios from "axios";
+import { useRecoilValue, useSetRecoilState } from "recoil";
+import {
+  verifierState, // ▶︎ NEW
+  acState,
+  hcState,
+  mtState,
+} from "@/recoil/filterState";
 import { useWindowResize } from "@/hooks/useWindowResize";
 import { detailInfoState } from "@/recoil/detailInfoState";
 
@@ -11,183 +17,144 @@ interface RowResponse {
   row: string;
   reduction: number;
 }
-
 interface TableResponse {
   subject: string;
-  data: object;
+  data: RowResponse[];
 }
 
 export default function CimTable() {
+  /* ───────── 상태 ───────── */
   const [tableData, setTableData] = useState<RowResponse[]>([]);
   const [tableSubject, setTableSubject] = useState("Country");
   const [totalReduction, setTotalReduction] = useState(0);
-  const acValue = useRecoilValue(acState);
-  const hcValue = useRecoilValue(hcState);
-  const mtValue = useRecoilValue(mtState);
+
+  /* ───────── 필터 값 ───────── */
+  const verifier = useRecoilValue(verifierState); // ▶︎ NEW
+  const ac = useRecoilValue(acState);
+  const hc = useRecoilValue(hcState);
+  const mt = useRecoilValue(mtState);
+
+  /* 기타 상태 */
   const innerWidth = useWindowResize();
-  const detailInfoValue = useRecoilValue(detailInfoState);
-  const setDetailInfoState = useSetRecoilState(detailInfoState);
+  const detail = useRecoilValue(detailInfoState);
+  const setDetail = useSetRecoilState(detailInfoState);
 
-  const handleClickedMoreInfo = () => {
-    setDetailInfoState(!detailInfoValue);
-  };
+  const handleClickedMoreInfo = () => setDetail(!detail);
 
-  useEffect(() => {
-    const urlParams = new URLSearchParams();
-    if (!acValue.includes("All")) urlParams.append("ac", acValue);
-    if (!hcValue.includes("All")) urlParams.append("hc", hcValue);
-    if (!mtValue.includes("All")) urlParams.append("mt", mtValue);
+  /* ---------- 데이터 요청 함수 ---------- */
+  const fetchTable = useCallback(async () => {
+    const p = new URLSearchParams();
+    if (verifier !== "All") p.append("verifier", verifier); // ▶︎ NEW
+    if (ac !== "All") p.append("ac", ac);
+    if (hc !== "All") p.append("hc", hc);
+    if (mt !== "All") p.append("mt", mt);
 
-    const url = `${
-      process.env.NEXT_PUBLIC_API_URL
-    }/table?${urlParams.toString()}`;
+    try {
+      const { data, status } = await axios.get<TableResponse>(
+        `${process.env.NEXT_PUBLIC_API_URL}/table?${p.toString()}`
+      );
+      if (status === 200) {
+        setTableSubject(data.subject);
+        const rows = data.data;
 
-    const requestTableData = async () => {
-      try {
-        const response = await axios.get(url);
-        if (response.status === 200) {
-          const data = response.data as TableResponse;
-
-          setTableSubject(data.subject);
-
-          // object to array
-          // const keyArray = Object.keys(data.data);
-          // const valueArray = Object.values(data.data) as number[];
-
-          // const tableData = keyArray.map((key, index) => {
-          //   return { row: key, reduction: valueArray[index] } as RowResponse;
-          // });
-
-          const tableData = data.data as RowResponse[];
-
-          // const sortedTableData = tableData.sort((a, b) => {
-          //   return Number(b.reduction) - Number(a.reduction);
-          // });
-
-          // innerWidth가 768px 이상이면 최대 15개. 15개 안될경우 빈칸으로 채움
-          // innerWidth가 768px 미만이면 최대 15개. 빈칸 안채움.
-          const innerWidthOrg = window.innerWidth;
-          if (tableData.length > 15) {
-            setTableData(tableData.slice(0, 15));
-          } else {
-            if (innerWidthOrg >= 768) {
-              const emptyArray = Array(15 - tableData.length).fill({
-                row: "",
-                reduction: -1,
-              });
-
-              setTableData(tableData.concat(emptyArray));
-            } else {
-              setTableData(tableData);
-            }
-          }
-
-          // calculate total reduction
-          const totalReduction = tableData.reduce((acc, cur) => {
-            return acc + cur.reduction;
-          }, 0);
-          setTotalReduction(totalReduction);
+        /* 길이 조정 (15행 고정/모바일) */
+        const isMobile = window.innerWidth < 768;
+        let processed = rows.slice(0, 15);
+        if (!isMobile && processed.length < 15) {
+          processed = processed.concat(
+            Array(15 - processed.length).fill({ row: "", reduction: -1 })
+          );
         }
-      } catch (error) {}
-    };
-    requestTableData();
-  }, [acValue, hcValue, mtValue]);
+        if (isMobile) {
+          // 뒤쪽 빈칸 제거
+          while (
+            processed.length &&
+            processed[processed.length - 1].reduction === -1
+          )
+            processed.pop();
+        }
+        setTableData(processed);
 
-  const formatNumber = (num: number) => {
-    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-  };
-
-  const balanceTableLength = (isMobile: boolean) => {
-    if (tableData.length === 0) return;
-    if (isMobile) {
-      const tempTableData = tableData;
-      let lastReduction = tempTableData[tempTableData.length - 1].reduction;
-      while (lastReduction === -1) {
-        tempTableData.pop();
-        lastReduction = tempTableData[tempTableData.length - 1].reduction;
+        /* 총합 */
+        setTotalReduction(rows.reduce((acc, cur) => acc + cur.reduction, 0));
       }
-      setTableData(tempTableData);
-    } else {
-      if (tableData.length > 15) {
-        setTableData(tableData.slice(0, 15));
-      } else {
-        const emptyArray = Array(15 - tableData.length).fill({
-          row: "",
-          reduction: -1,
-        });
-        setTableData(tableData.concat(emptyArray));
-      }
+    } catch (_) {
+      /* 에러 무시 */
     }
-  };
+  }, [verifier, ac, hc, mt]);
 
+  /* ---------- 효과 ---------- */
   useEffect(() => {
-    balanceTableLength(innerWidth < 768);
+    fetchTable();
+  }, [fetchTable]);
+
+  /* 창 크기 변화에 따른 테이블 길이 재조정 */
+  useEffect(() => {
+    if (!tableData.length) return;
+    const isMobile = innerWidth < 768;
+    if (isMobile && tableData[tableData.length - 1].reduction === -1) {
+      setTableData(tableData.filter((r) => r.reduction !== -1));
+    } else if (!isMobile && tableData.length < 15) {
+      setTableData(
+        tableData.concat(
+          Array(15 - tableData.length).fill({ row: "", reduction: -1 })
+        )
+      );
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [innerWidth]);
 
+  const fmt = (n: number) => n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+
+  /* ---------- 렌더 ---------- */
   return (
     <main className="flex flex-col w-full md:min-h-[519px] shrink-0">
-      {/* subjects */}
       <span className="py-[10px] text-[12px] font-[700]">
         Global Carbon Reduction Performance Table
       </span>
-      {/* table */}
+
       <table className="w-full flex-1">
         <thead>
-          <tr className="text-[12px] font-[700] bg-primary text-white font-[700] text-center">
-            <th className="w-[17.5%] border border-r-1 text-start p-[10px]">
-              Index
-            </th>
-            <th className="w-[41.25%] border border-r-1 text-start p-[10px]">
+          <tr className="text-[12px] font-[700] bg-primary text-white text-center">
+            <th className="w-[17.5%] border text-start p-[10px]">Index</th>
+            <th className="w-[41.25%] border text-start p-[10px]">
               {tableSubject}
             </th>
-            <th className="w-[41.25%] border border-r-1 text-start p-[10px]">
+            <th className="w-[41.25%] border text-start p-[10px]">
               Carbon Reduction(tCO2)
             </th>
           </tr>
         </thead>
-        <tbody className="text-[12px] font-[400] text-start">
-          {/* table 나열, index는 텍스트 가운데 정렬, 짝수 행은 배경 색있음. 무조건 15개 행존재. 데이터 없을 때에는 빈칸으로라도 존재 */}
-          {tableData.map((data, index) => (
-            <tr
-              key={index}
-              className={
-                "h-[24px]" + " " + `${index % 2 === 1 ? "bg-[#E6F8F5]" : ""}`
-              }
-            >
-              {data.row === "" ? (
-                <td className="opacity-[0%]">{index + 1}</td>
-              ) : (
-                <td className="text-center">{index + 1}</td>
-              )}
-              <td className="pl-[10px]">{data.row}</td>
+        <tbody className="text-[12px]">
+          {tableData.map((d, i) => (
+            <tr key={i} className={`h-[24px] ${i % 2 ? "bg-[#E6F8F5]" : ""}`}>
+              <td className={d.row ? "text-center" : "opacity-0"}>{i + 1}</td>
+              <td className="pl-[10px]">{d.row}</td>
               <td className="pl-[10px]">
-                {data.reduction === -1 ? "" : formatNumber(data.reduction)}
+                {d.reduction === -1 ? "" : fmt(d.reduction)}
               </td>
             </tr>
           ))}
         </tbody>
       </table>
-      <div className="flex w-full justify-between bg-[#E6F8F5] border border-t-primary py-[6px] px-[10px] items-center">
+
+      <div className="flex w-full justify-between bg-[#E6F8F5] border border-t-primary py-[6px] px-[10px]">
         <span className="text-[12px] font-[700]">Total Carbon Reduction</span>
         <div className="text-[#007865]">
-          <span className="text-[12px] font-[600]">
-            {formatNumber(totalReduction)}
-          </span>
+          <span className="text-[12px] font-[600]">{fmt(totalReduction)}</span>
           <span className="text-[10px] font-[400]"> tCO2</span>
         </div>
       </div>
-      {/* more info */}
+
+      {/* desktop 전용 More-info 버튼 */}
       <button
         onClick={handleClickedMoreInfo}
-        className="md:flex hidden w-full justify-end space-x-[10px] items-center h-[36px]"
+        className="md:flex hidden w-full justify-end items-center h-[36px] space-x-[10px]"
       >
-        <span className="text-primary text-[12px] font-[400]">
+        <span className="text-primary text-[12px]">
           More detail information
         </span>
-        <div className="flex w-[24px] h-[24px] py-[6px] px-[2px] justify-center items-center">
-          <Image src="/cim/arrow_down.png" width={10} height={20} alt="more" />
-        </div>
+        <Image src="/cim/arrow_down.png" width={10} height={20} alt="more" />
       </button>
     </main>
   );

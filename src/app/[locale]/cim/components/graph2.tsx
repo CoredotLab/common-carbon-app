@@ -12,7 +12,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { useRecoilValue } from "recoil";
-import { acState, hcState, mtState } from "@/recoil/filterState";
+import { acState, hcState, mtState, verifierState } from "@/recoil/filterState";
 import axios from "axios";
 
 interface GraphData {
@@ -70,12 +70,14 @@ export default function CimGraph2() {
   const acValue = useRecoilValue(acState);
   const hcValue = useRecoilValue(hcState);
   const mtValue = useRecoilValue(mtState);
+  const vValue = useRecoilValue(verifierState);
 
   const requestGraphData = async () => {
     const urlParams = new URLSearchParams();
     if (!acValue.includes("All")) urlParams.append("ac", acValue);
     if (!hcValue.includes("All")) urlParams.append("hc", hcValue);
     if (!mtValue.includes("All")) urlParams.append("mt", mtValue);
+    if (vValue !== "All") urlParams.append("verifier", vValue);
 
     const url = `${
       process.env.NEXT_PUBLIC_API_URL
@@ -93,7 +95,7 @@ export default function CimGraph2() {
 
   useEffect(() => {
     requestGraphData();
-  }, [acValue, hcValue, mtValue]);
+  }, [acValue, hcValue, mtValue, vValue]);
 
   return (
     <main className="flex flex-col w-full h-[232px] shrink-0 space-y-[11px]">

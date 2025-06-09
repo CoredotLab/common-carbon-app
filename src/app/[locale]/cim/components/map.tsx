@@ -1,12 +1,13 @@
 "use client";
+
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import Map, {
-  Layer,
-  MapRef,
   Source,
+  Layer,
   Popup,
   MapLayerMouseEvent,
+  MapRef,
 } from "react-map-gl";
-import { useEffect, useRef, useState } from "react";
 import "mapbox-gl/dist/mapbox-gl.css";
 import Image from "next/image";
 import { useRecoilValue, useSetRecoilState } from "recoil";
@@ -14,200 +15,139 @@ import {
   acState,
   hcState,
   mtState,
+  verifierState,
   dynamicAcOptionsState,
   dynamicHcOptionsState,
 } from "@/recoil/filterState";
-// dynamicAcOptionsState, dynamicHcOptionsState: 새로 추가한 atom
-// 이를 통해 화면상 보이는 포인트 기반으로 AC/HC 필터 목록을 업데이트
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
-interface HoverInfo {
-  longitude: number;
-  latitude: number;
-  cluster?: boolean;
-  properties: {
-    title?: string;
-    company?: string;
-    methodology?: string;
-    reduction?: number;
-    point_count?: number;
-    reductionSum?: number;
-    ac_name?: string;
-    hc_name?: string;
-  };
-}
+/* ───────── 헬퍼: 숫자 포맷 ───────── */
+const fmtNumber = (n?: number) =>
+  n === undefined
+    ? ""
+    : n >= 1e9
+    ? `${Math.round(n / 1e9)}B`
+    : n >= 1e6
+    ? `${Math.round(n / 1e6)}M`
+    : n >= 1e3
+    ? `${Math.round(n / 1e3)}K`
+    : n.toString();
 
+/* ───────── 메인 컴포넌트 ───────── */
 export default function CimMap() {
+  /* Recoil 상태 */
+  const ac = useRecoilValue(acState);
+  const hc = useRecoilValue(hcState);
+  const mt = useRecoilValue(mtState);
+  const verifier = useRecoilValue(verifierState);
+
+  const setDynAc = useSetRecoilState(dynamicAcOptionsState);
+  const setDynHc = useSetRecoilState(dynamicHcOptionsState);
+
   const mapRef = useRef<MapRef>(null);
-  const acValue = useRecoilValue(acState);
-  const hcValue = useRecoilValue(hcState);
-  const mtValue = useRecoilValue(mtState);
+  const [hoverInfo, setHoverInfo] = useState<null | any>(null);
 
-  const setDynamicAcOptions = useSetRecoilState(dynamicAcOptionsState);
-  const setDynamicHcOptions = useSetRecoilState(dynamicHcOptionsState);
+  /* URL 빌더 (메모이즈) */
+  const buildGeoUrl = useCallback(() => {
+    const p = new URLSearchParams();
+    if (verifier !== "All") p.append("verifier", verifier);
+    if (ac !== "All") p.append("ac", ac);
+    if (hc !== "All") p.append("hc", hc);
+    if (mt !== "All") p.append("mt", mt);
+    return `${process.env.NEXT_PUBLIC_API_URL}/geomap?${p.toString()}`;
+  }, [verifier, ac, hc, mt]);
 
-  const [mapUrl, setMapUrl] = useState(
-    `${process.env.NEXT_PUBLIC_API_URL}/geomap`
-  );
-  const [hoverInfo, setHoverInfo] = useState<HoverInfo | null>(null);
+  /* GeoJSON URL (memo → re-render 시 Source 갱신) */
+  const geoUrl = useMemo(buildGeoUrl, [buildGeoUrl]);
 
-  const formatNumber = (num: number | undefined) => {
-    if (num === undefined) return "";
-    if (num >= 1000000000) {
-      return `${Math.round(num / 1000000000)}B`;
-    } else if (num >= 1000000) {
-      return `${Math.round(num / 1000000)}M`;
-    } else if (num >= 1000) {
-      return `${Math.round(num / 1000)}K`;
-    }
-    return num.toString();
-  };
+  /* ───────── 핸들러 ───────── */
+  const onMapClick = (e: MapLayerMouseEvent) => {
+    const f = e.features?.[0];
+    if (!f || f.geometry.type !== "Point") return;
 
-  const onMapClick = (event: MapLayerMouseEvent) => {
-    const feature = event.features && event.features[0];
-    if (!feature) return;
-    if (feature.geometry && feature.geometry.type === "Point") {
-      const coordinates = feature.geometry.coordinates as [number, number];
+    const coords = f.geometry.coordinates as [number, number];
 
-      if (feature.layer.id === "clusters" && mapRef.current) {
-        // 클러스터 확대 로직
-        const clusterId = feature.properties?.cluster_id;
-        const mapboxSource = mapRef.current
-          .getMap()
-          .getSource("myData") as mapboxgl.GeoJSONSource;
-        mapboxSource.getClusterExpansionZoom(clusterId, (err, zoom) => {
-          if (err) return;
-          mapRef.current?.easeTo({
-            center: coordinates,
-            zoom,
-            duration: 500,
-          });
-        });
-      } else {
-        // 포인트 이동
-        mapRef.current?.easeTo({
-          center: coordinates,
-          zoom: 6,
-          duration: 500,
-        });
-      }
-    }
-  };
-
-  const onMouseMove = (event: MapLayerMouseEvent) => {
-    const features = event.features;
-    if (!features) {
-      setHoverInfo(null);
-      return;
-    }
-
-    const clusterFeature = features.find((f) => f.layer.id === "clusters");
-    if (clusterFeature && clusterFeature.geometry.type === "Point") {
-      const coords = clusterFeature.geometry.coordinates as [number, number];
-      setHoverInfo({
-        longitude: coords[0],
-        latitude: coords[1],
-        cluster: true,
-        properties: {
-          point_count: clusterFeature.properties?.point_count,
-          reductionSum: clusterFeature.properties?.reductionSum,
-        },
-      });
-      return;
-    }
-
-    const pointFeature = features.find(
-      (f) => f.layer.id === "unclustered-point"
-    );
-    if (pointFeature && pointFeature.geometry.type === "Point") {
-      const coords = pointFeature.geometry.coordinates as [number, number];
-      setHoverInfo({
-        longitude: coords[0],
-        latitude: coords[1],
-        cluster: false,
-        properties: {
-          title: pointFeature.properties?.title,
-          company: pointFeature.properties?.company,
-          methodology: pointFeature.properties?.methodology,
-          reduction: pointFeature.properties?.reduction,
-          ac_name: pointFeature.properties?.ac_name,
-          hc_name: pointFeature.properties?.hc_name,
-        },
+    if (f.layer.id === "clusters" && mapRef.current) {
+      const src = mapRef.current
+        .getMap()
+        .getSource("myData") as mapboxgl.GeoJSONSource;
+      src.getClusterExpansionZoom(f.properties?.cluster_id, (err, zoom) => {
+        if (!err)
+          mapRef.current?.easeTo({ center: coords, zoom, duration: 500 });
       });
     } else {
-      setHoverInfo(null);
+      mapRef.current?.easeTo({ center: coords, zoom: 6, duration: 500 });
     }
   };
 
-  // 맵 이동/줌 종료 시 현재 viewport에 보여지는 unclustered-point들 기반으로 AC, HC 목록 업데이트
-  const onMoveEnd = () => {
-    if (!mapRef.current) {
-      return;
+  const onMouseMove = (e: MapLayerMouseEvent) => {
+    const fs = e.features;
+    if (!fs?.length) return setHoverInfo(null);
+
+    const cluster = fs.find((f) => f.layer.id === "clusters");
+    if (cluster && cluster.geometry.type === "Point") {
+      const [lng, lat] = cluster.geometry.coordinates as [number, number];
+      return setHoverInfo({
+        longitude: lng,
+        latitude: lat,
+        cluster: true,
+        props: cluster.properties,
+      });
     }
+    const point = fs.find((f) => f.layer.id === "unclustered-point");
+    if (point && point.geometry.type === "Point") {
+      const [lng, lat] = point.geometry.coordinates as [number, number];
+      return setHoverInfo({
+        longitude: lng,
+        latitude: lat,
+        cluster: false,
+        props: point.properties,
+      });
+    }
+    setHoverInfo(null);
+  };
 
-    const map = mapRef.current.getMap();
-
-    // 현재 뷰포트에 표시되는 unclustered-point 피쳐들 가져오기
-    const visibleFeatures = map.queryRenderedFeatures(undefined, {
-      layers: ["unclustered-point"],
-    });
+  /* 뷰포트 변경 → 동적 옵션 집계 */
+  const onMoveEnd = () => {
+    if (!mapRef.current) return;
+    const vis = mapRef.current
+      .getMap()
+      .queryRenderedFeatures(undefined, { layers: ["unclustered-point"] });
 
     const acSet = new Set<string>();
     const hcSet = new Set<string>();
-
-    visibleFeatures.forEach((f) => {
-      const acName = f.properties?.ac_name;
-      const hcName = f.properties?.hc_name;
-      if (acName) acSet.add(acName);
-      if (hcName) hcSet.add(hcName);
+    vis.forEach((f) => {
+      f.properties?.ac_name && acSet.add(f.properties.ac_name);
+      f.properties?.hc_name && hcSet.add(f.properties.hc_name);
     });
-
-    // recoil state로 AC, HC 옵션 업데이트
-    setDynamicAcOptions(Array.from(acSet));
-    setDynamicHcOptions(Array.from(hcSet));
+    setDynAc(Array.from(acSet));
+    setDynHc(Array.from(hcSet));
   };
-
-  useEffect(() => {
-    const urlParams = new URLSearchParams();
-    if (!acValue.includes("All")) urlParams.append("ac", acValue);
-    if (!hcValue.includes("All")) urlParams.append("hc", hcValue);
-    if (!mtValue.includes("All")) urlParams.append("mt", mtValue);
-
-    const url = `${
-      process.env.NEXT_PUBLIC_API_URL
-    }/geomap?${urlParams.toString()}`;
-    setMapUrl(url);
-  }, [acValue, hcValue, mtValue]);
 
   return (
     <main className="w-full min-h-[300px] border relative">
       <Map
-        initialViewState={{
-          latitude: 37.6,
-          longitude: 127.0,
-          zoom: 2,
-        }}
+        initialViewState={{ longitude: 127.0, latitude: 37.6, zoom: 2 }}
         style={{ width: "100%", height: "100%", minHeight: "300px" }}
         mapStyle="mapbox://styles/mapbox/light-v10"
         mapboxAccessToken={MAPBOX_TOKEN}
         onClick={onMapClick}
         onMouseMove={onMouseMove}
-        onMoveEnd={onMoveEnd} // 이동 종료 시 onMoveEnd 호출
+        onMoveEnd={onMoveEnd}
         interactiveLayerIds={["unclustered-point", "clusters", "cluster-count"]}
         ref={mapRef}
       >
         <Source
           id="myData"
           type="geojson"
-          data={mapUrl}
-          cluster={true}
+          data={geoUrl} /* ← verifier 적용 URL */
+          cluster
           clusterRadius={40}
           clusterMaxZoom={9}
-          clusterProperties={{
-            reductionSum: ["+", ["get", "reduction"]],
-          }}
+          clusterProperties={{ reductionSum: ["+", ["get", "reduction"]] }}
         >
+          {/* cluster bubbles */}
           <Layer
             id="clusters"
             type="circle"
@@ -229,7 +169,6 @@ export default function CimMap() {
               "circle-stroke-width": 2,
             }}
           />
-
           <Layer
             id="cluster-count"
             type="symbol"
@@ -245,6 +184,7 @@ export default function CimMap() {
             }}
           />
 
+          {/* individual points */}
           <Layer
             id="unclustered-point"
             type="circle"
@@ -256,17 +196,17 @@ export default function CimMap() {
                 ["get", "reduction"],
                 0,
                 10,
-                2000,
+                2_000,
                 12,
-                5000,
+                5_000,
                 14,
-                30000,
+                30_000,
                 16,
-                100000,
+                100_000,
                 18,
-                500000,
+                500_000,
                 20,
-                1000000,
+                1_000_000,
                 22,
               ],
               "circle-color": "#50BBD6",
@@ -275,6 +215,7 @@ export default function CimMap() {
             }}
           />
 
+          {/* point labels */}
           <Layer
             id="unclustered-text"
             type="symbol"
@@ -282,37 +223,29 @@ export default function CimMap() {
             layout={{
               "text-field": [
                 "case",
-                [">=", ["get", "reduction"], 1000000000],
+                [">=", ["get", "reduction"], 1e9],
                 [
                   "concat",
-                  [
-                    "to-string",
-                    ["round", ["/", ["get", "reduction"], 1000000000]],
-                  ],
+                  ["to-string", ["round", ["/", ["get", "reduction"], 1e9]]],
                   "B",
                 ],
-                [">=", ["get", "reduction"], 1000000],
+                [">=", ["get", "reduction"], 1e6],
                 [
                   "concat",
-                  [
-                    "to-string",
-                    ["round", ["/", ["get", "reduction"], 1000000]],
-                  ],
+                  ["to-string", ["round", ["/", ["get", "reduction"], 1e6]]],
                   "M",
                 ],
-                [">=", ["get", "reduction"], 1000],
+                [">=", ["get", "reduction"], 1e3],
                 [
                   "concat",
-                  ["to-string", ["round", ["/", ["get", "reduction"], 1000]]],
+                  ["to-string", ["round", ["/", ["get", "reduction"], 1e3]]],
                   "K",
                 ],
                 ["to-string", ["get", "reduction"]],
               ],
               "text-size": 14,
               "text-allow-overlap": true,
-              "text-ignore-placement": true,
               "text-anchor": "center",
-              "text-font": ["DIN Offc Pro Medium", "Arial Unicode MS Bold"],
             }}
             paint={{
               "text-color": "#fff",
@@ -322,6 +255,7 @@ export default function CimMap() {
           />
         </Source>
 
+        {/* Popup */}
         {hoverInfo && (
           <Popup
             longitude={hoverInfo.longitude}
@@ -332,46 +266,44 @@ export default function CimMap() {
           >
             <div className="text-sm">
               {hoverInfo.cluster ? (
-                <div>
-                  <div className="font-bold mb-1">
-                    {hoverInfo.properties.point_count} points in this cluster
-                  </div>
-                  <div>
-                    Reduction Sum:{" "}
-                    {formatNumber(hoverInfo.properties.reductionSum)} tCO2
-                  </div>
-                  <div className="text-xs mt-1">Click cluster to zoom in.</div>
-                </div>
-              ) : (
                 <>
                   <div className="font-bold mb-1">
-                    {hoverInfo.properties.title}
+                    {hoverInfo.props.point_count} points in this cluster
                   </div>
-                  <div>Company: {hoverInfo.properties.company}</div>
-                  <div>Methodology: {hoverInfo.properties.methodology}</div>
-                  <div>Reduction: {hoverInfo.properties.reduction} tCO2</div>
+                  <div>
+                    Reduction Sum: {fmtNumber(hoverInfo.props.reductionSum)}{" "}
+                    tCO2
+                  </div>
+                  <div className="text-xs mt-1">Click cluster to zoom in.</div>
+                </>
+              ) : (
+                <>
+                  <div className="font-bold mb-1">{hoverInfo.props.title}</div>
+                  <div>Company: {hoverInfo.props.company}</div>
+                  <div>Methodology: {hoverInfo.props.methodology}</div>
+                  <div>Reduction: {hoverInfo.props.reduction} tCO2</div>
                 </>
               )}
             </div>
           </Popup>
         )}
       </Map>
-      <div className="absolute top-[21px] left-[10px]">
-        <Image
-          src="/cim/map_carbon_reduction_index.png"
-          width={188}
-          height={18}
-          alt="index"
-        />
-      </div>
-      <div className="absolute top-[50px] left-[10px]">
-        <Image
-          src="/cim/map_carbon_reduction_index2.png"
-          width={112}
-          height={18}
-          alt="index"
-        />
-      </div>
+
+      {/* 색상 인덱스 이미지 (디자인 유지) */}
+      <Image
+        src="/cim/map_carbon_reduction_index.png"
+        width={188}
+        height={18}
+        alt="index"
+        className="absolute top-[21px] left-[10px]"
+      />
+      <Image
+        src="/cim/map_carbon_reduction_index2.png"
+        width={112}
+        height={18}
+        alt="index"
+        className="absolute top-[50px] left-[10px]"
+      />
     </main>
   );
 }

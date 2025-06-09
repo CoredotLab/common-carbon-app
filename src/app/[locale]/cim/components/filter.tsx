@@ -10,6 +10,7 @@ import {
   mtState,
   openFilterState,
 } from "@/recoil/filterState";
+import FilterDropdown from "./filters/FilterDropdown";
 
 interface AC {
   ac_id: number;
@@ -24,59 +25,6 @@ interface HC {
 interface MT {
   mt_id: number;
   mt_name: string;
-}
-
-interface FilterDropdownProps<T> {
-  title: string;
-  items: T[];
-  value: string;
-  onSelect: (val: string) => void;
-  open: boolean;
-  onToggle: () => void;
-  displayKey: keyof T;
-}
-
-function FilterDropdown<T extends object>({
-  title,
-  items,
-  value,
-  onSelect,
-  open,
-  onToggle,
-  displayKey,
-}: FilterDropdownProps<T>) {
-  return (
-    <div className="flex flex-col space-y-[7px]">
-      <span className="text-[16px] font-[500]">{title}</span>
-      <div className="relative">
-        <button
-          onClick={onToggle}
-          className="border border-[1px] border-[#B4B1B1] bg-[#F5F5F5] flex w-[213px] h-[30px] py-[10px] px-[20px] items-center justify-between rounded-[8px]"
-        >
-          {value || "Select"}
-          <Image
-            src="/icon_dropdown.svg"
-            alt="arrow-down"
-            width={18}
-            height={18}
-          />
-        </button>
-        {open && (
-          <div className="absolute border border-[1px] border-[#B4B1B1] bg-[#F5F5F5] w-[213px] mt-1 rounded-[8px] z-40 overflow-y-auto max-h-[200px] flex flex-col">
-            {items.map((item, idx) => (
-              <div
-                key={idx}
-                className="p-1 hover:bg-gray-200 cursor-pointer px-[20px]"
-                onClick={() => onSelect(String(item[displayKey]))}
-              >
-                {String(item[displayKey])}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
 }
 
 export default function Filter() {
