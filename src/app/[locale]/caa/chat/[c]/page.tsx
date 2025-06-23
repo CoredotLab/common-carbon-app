@@ -19,6 +19,9 @@ import {
   FeedbackModal,
 } from "./components/ConsultOrFeedbackModal";
 import { mutate } from "swr";
+import dayjs from "dayjs";
+
+const FOOTER_H = 88;
 
 export default function ChatPage({ params }: { params: { c: string } }) {
   /* ---------------- state ---------------- */
@@ -42,13 +45,17 @@ export default function ChatPage({ params }: { params: { c: string } }) {
   /* ---------------- helpers ---------------- */
   const scrollToBottom = () =>
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  useEffect(scrollToBottom, [messages]);
 
-  /* ---------- ① 새 챗 시작 (prompt QS) ---------- */
+  const prevLenRef = useRef(0); // ← 추가
+
   useEffect(() => {
-    if (params.c !== "new" || !promptQS) return;
-    createConversation(promptQS);
-  }, [params.c, promptQS]);
+    const hasNewMsg = messages.length > prevLenRef.current;
+    prevLenRef.current = messages.length;
+
+    if (hasNewMsg) {
+      scrollToBottom(); // 새 메시지일 때만 스크롤
+    }
+  }, [messages]);
 
   /* ---------- ② 기존 챗 로딩 ---------- */
   /* ---------- ② 기존 챗 로딩 ---------- */
@@ -136,14 +143,33 @@ export default function ChatPage({ params }: { params: { c: string } }) {
     };
   }, [id]);
 
+  useEffect(() => {
+    if (params.c !== "new" || !promptQS) return;
+    createConversation(promptQS); // ↖ 수정된 함수 사용
+  }, [params.c, promptQS]);
+
   /* ======================================================================== */
   /* -------------------------  메시지 전송 로직  --------------------------- */
   /* ======================================================================== */
 
   /** 새 Conversation 개설 + 첫 질문 */
   const createConversation = async (text: string) => {
+    /* 1) Optimistic UI: 유저 버블 + 어시스턴트 플레이스홀더 */
+    setMessages([
+      { role: "user", content: text, rating: "none" },
+      {
+        role: "assistant",
+        content: "Thinking…",
+        status: "pending",
+        rating: "none",
+        thinking: true,
+      },
+    ]);
+
     try {
       setLoading(true);
+
+      /* 2) 서버 요청 */
       await mutate(
         "/api/chat_caa/users/me/conversations?limit=50&sort=updated_desc"
       );
@@ -152,29 +178,32 @@ export default function ChatPage({ params }: { params: { c: string } }) {
         initial_message: text,
       });
 
+      /* 3) ID 확정 및 라우팅 */
       setConversationId(data.conversation_id);
-      setMessages([
-        {
+      router.replace(`/en/caa/chat/${data.conversation_id}`);
+
+      /* 4) 플레이스홀더 교체 */
+      setMessages((prev) => {
+        // 마지막 버블(플레이스홀더) 제거
+        const withoutPlaceholder = prev.slice(0, -1);
+        return withoutPlaceholder.concat({
           role: "assistant",
           messageId: data.assistant_msg_id ?? 0,
           content: data.assistant_reply,
-          status: data.status,
+          status: data.status, // done | pending
           rating: "none",
           sources: data.sources,
           relatedQuestions: data.related_questions,
-        },
-      ]);
-
-      router.replace(`/en/caa/chat/${data.conversation_id}`);
-      // 대화 처음 만들고 나서
+        });
+      });
     } catch (e: any) {
-      alert(e.response?.data?.detail ?? "대화를 생성할 수 없습니다.");
+      toast.error(e.response?.data?.detail ?? "대화를 생성할 수 없습니다.");
+      // 실패 시 플레이스홀더 삭제
+      setMessages((prev) => prev.slice(0, -1));
       router.replace("/en/caa");
     } finally {
       setLoading(false);
-      await mutate(
-        "/api/chat_caa/users/me/conversations?limit=50&sort=updated_desc"
-      );
+      mutate("/api/chat_caa/users/me/conversations?limit=50&sort=updated_desc");
     }
   };
 
@@ -249,15 +278,6 @@ export default function ChatPage({ params }: { params: { c: string } }) {
   /* -------------------------  UI  --------------------------- */
   /* ======================================================================== */
 
-  if (loading) {
-    return (
-      <div className="w-full h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600" />
-        <span className="ml-3">Loading chat…</span>
-      </div>
-    );
-  }
-
   return (
     <>
       <div className="w-full min-h-screen flex flex-col bg-white">
@@ -286,8 +306,17 @@ export default function ChatPage({ params }: { params: { c: string } }) {
                   // 서버가 보내준 파일명 우선 사용
                   const disposition = headers["content-disposition"] ?? "";
                   const match = disposition.match(/filename="?([^"]+)"?/);
-                  const filename =
-                    (match && match[1]) || `conversation_${conversationId}.pdf`;
+                  let filename = match?.[1];
+
+                  // Make sure dayjs is imported at the top: import dayjs from "dayjs";
+
+                  // 2️⃣ 없으면 대화 생성 시각 기준 YYYYMMDD_HHmm_chat.pdf
+                  if (!filename) {
+                    // createdAt을 프런트에 이미 들고 있으면 그걸 쓰고,
+                    // 없으면 현재 시각으로 fallback
+                    const ts = dayjs().format("YYYYMMDD_HHmm");
+                    filename = `${ts}_chat.pdf`;
+                  }
 
                   downloadBlob(data, filename);
                   toast.success("Download complete", { id: "pdf" });
@@ -312,7 +341,13 @@ export default function ChatPage({ params }: { params: { c: string } }) {
         </header>
 
         {/* 메시지 영역 */}
-        <main className="flex-1 overflow-y-auto flex flex-col items-center">
+        <main
+          style={{ paddingBottom: FOOTER_H }}
+          className={`
+          flex-1 overflow-y-auto flex flex-col items-center
+          
+        `}
+        >
           <div className="w-full max-w-[800px] flex flex-col gap-6 p-4">
             {messages.map((m, i) => (
               <ChatBubble
@@ -334,7 +369,12 @@ export default function ChatPage({ params }: { params: { c: string } }) {
         </main>
 
         {/* 입력창 */}
-        <footer className="w-full flex flex-col items-center px-2 pt-2 pb-10 gap-4">
+        <footer
+          className="fixed bottom-0 left-[280px] right-0 z-40
+                 flex flex-col items-center px-2 pt-2 pb-4
+                 bg-white/95 backdrop-blur shadow"
+          style={{ height: FOOTER_H }} /* 높이 고정 */
+        >
           <div className="max-w-[800px] w-full flex items-center bg-aliceblue border border-lightsteelblue rounded-[22px] px-4 h-11">
             <input
               className="flex-1 bg-transparent outline-none"
@@ -342,16 +382,22 @@ export default function ChatPage({ params }: { params: { c: string } }) {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={onEnter}
-              disabled={sending}
+              disabled={sending || loading}
             />
             <button
-              onClick={() => handleSend()}
-              disabled={sending || !input.trim()}
+              onClick={() => {
+                if (sending || !input.trim()) return;
+                if (loading) {
+                  return;
+                }
+                handleSend();
+              }}
+              disabled={sending || !input.trim() || loading}
               className="w-11 h-11 flex items-center justify-center"
             >
               <Image
                 src={
-                  input.trim()
+                  input.trim() && !loading
                     ? "/caa/icon_send_active.svg"
                     : "/caa/icon_send.svg"
                 }
@@ -379,6 +425,19 @@ export default function ChatPage({ params }: { params: { c: string } }) {
           </button>
         </footer>
       </div>
+      {/* 3️⃣ ─ 작은 로딩 배지 */}
+      {loading && (
+        <div
+          className="
+            fixed top-4 right-4 z-50
+            flex items-center gap-2
+            bg-white/90 backdrop-blur px-3 py-2 rounded shadow
+          "
+        >
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600" />
+          <span className="text-xs font-medium text-gray-600">Loading…</span>
+        </div>
+      )}
       {conversationId && (
         <>
           <ConsultModal
@@ -427,8 +486,8 @@ const ChatBubble = ({
     }
   };
 
-  /* -------- 컨텐츠 렌더 -------- */
   const renderContent = () => {
+    /* 1) 사용자 버블 */
     if (isUser) {
       return (
         <p className="whitespace-pre-line leading-[26px] text-sm">
@@ -437,26 +496,43 @@ const ChatBubble = ({
       );
     }
 
+    /* 2) Thinking 중 */
     if (message.thinking || message.status === "pending") {
       return <ThinkingDots />;
     }
 
-    const safeHtml = DOMPurify.sanitize(message.content);
+    /* 3) 마크다운 렌더 (불릿 스타일 포함) */
+    const safeMd = DOMPurify.sanitize(message.content);
+
     return (
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
+          /* 본문 p */
           p: ({ children }) => (
             <p className="leading-[26px] text-sm whitespace-pre-wrap">
               {children}
             </p>
           ),
+          /* 굵게 */
           strong: ({ children }) => (
             <strong className="font-semibold">{children}</strong>
           ),
+          /* ▼ 불릿/번호 목록 스타일 추가 ▼ */
+          ul: ({ children }) => (
+            <ul className="list-disc pl-5 leading-[26px] text-sm">
+              {children}
+            </ul>
+          ),
+          ol: ({ children }) => (
+            <ol className="list-decimal pl-5 leading-[26px] text-sm">
+              {children}
+            </ol>
+          ),
+          li: ({ children }) => <li className="mb-1">{children}</li>,
         }}
       >
-        {safeHtml}
+        {safeMd}
       </ReactMarkdown>
     );
   };

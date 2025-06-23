@@ -78,6 +78,7 @@ export default function CimDetailInfo() {
         const response = await axios.get(url);
         if (response.status === 200) {
           const data = response.data as TableRowResponse[];
+
           const tableData = data.map((row) => {
             return {
               ac: row.ac,
